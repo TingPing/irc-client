@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC '-//OASIS//DTD DocBook XML V4.5//EN'
+                      'http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd' [
+<!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+<!ENTITY version SYSTEM "version.xml">
+]>
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <bookinfo>
+    <title>Irc Reference Manual</title>
+  </bookinfo>
+
+  <chapter>
+    <title>Irc</title>
+	<xi:include href="xml/irc-context.xml"/>
+    <xi:include href="xml/irc-context-action.xml"/>
+    <xi:include href="xml/irc-context-manager.xml"/>
+    <xi:include href="xml/irc-server.xml"/>
+    <xi:include href="xml/irc-channel.xml"/>
+    <xi:include href="xml/irc-message.xml"/>
+    <xi:include href="xml/irc-query.xml"/>
+    <xi:include href="xml/irc-user.xml"/>
+    <xi:include href="xml/irc-utils.xml"/>
+  </chapter>
+
+  <chapter>
+    <title>Irc Gui</title>
+	<xi:include href="xml/irc-application.xml"/>
+    <xi:include href="xml/irc-chatview.xml"/>
+    <xi:include href="xml/irc-contextview.xml"/>
+    <xi:include href="xml/irc-entry.xml"/>
+    <xi:include href="xml/irc-entrybuffer.xml"/>
+    <xi:include href="xml/irc-textview.xml"/>
+    <xi:include href="xml/irc-window.xml"/>
+  </chapter>
+  <chapter id="object-tree">
+    <title>Object Hierarchy</title>
+     <xi:include href="xml/tree_index.sgml"/>
+  </chapter>
+  <index id="api-index-full">
+    <title>API Index</title>
+    <xi:include href="xml/api-index-full.xml"/>
+  </index>
+</book>

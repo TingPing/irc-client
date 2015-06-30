@@ -1,0 +1,15 @@
+[type: gettext/gsettings]data/se.tingping.IrcClient.gschema.xml.in
+[type: gettext/xml]data/se.tingping.IrcClient.appdata.xml.in
+[type: gettext/ini]data/se.tingping.IrcClient.desktop.in
+[type: gettext/glade]data/gtk/menus.ui
+[type: gettext/glade]data/ui/networkproperties.ui
+[type: gettext/glade]data/ui/preferences.ui
+[type: gettext/glade]data/ui/window.ui
+src/gui/main.c
+src/gui/irc-userlist.c
+src/irc-channel.c
+src/irc-command.c
+src/irc-context.c
+src/irc-server.c
+src/irc-user.c
+

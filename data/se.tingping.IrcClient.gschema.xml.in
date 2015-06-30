@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<schemalist gettext-domain="irc-client">
+	<schema id="se.tingping.IrcClient" path="/se/tingping/IrcClient/">
+		<key name="window-pos" type="(ii)">
+			<summary>Last position of the main window</summary>
+			<default>(0,0)</default>
+		</key>
+		<key name="window-size" type="(ii)">
+			<summary>Last size of the main window</summary>
+			<default>(0,0)</default>
+		</key>
+		<key name="contextview-width" type="i">
+		    <summary>Width of contextview</summary>
+		    <default>175</default>
+		</key>
+		<key name="networks" type="as">
+			<summary>List of saved networks</summary>
+			<default>[]</default>
+		</key>
+		<key name="sort-contextview" type="b">
+		  <summary>Sort contextview alphabetically</summary>
+		  <default>true</default>
+		</key>
+		<key name="enabled-plugins" type="as">
+			<summary>Plugins to load on start</summary>
+			<default>[]</default>
+		</key>
+		<key name="font" type="s">
+		  <summary>Main font</summary>
+		  <default>"Monospace"</default>
+		</key>
+	</schema>
+
+	<!-- relocatable schema -->
+	<schema id="se.tingping.network">
+		<key name="hostname" type="s">
+			<summary>Host of the server for the network</summary>
+			<default>""</default>
+		</key>
+		<key name="tls" type="b">
+			<summary>Use a secure connection</summary>
+			<default>true</default>
+		</key>
+		<key name="nickname" type="s">
+			<default>""</default>
+		</key>
+		<key name="realname" type="s">
+			<default>"realname"</default>
+		</key>
+		<key name="server-username" type="s">
+			<default>""</default>
+		</key>
+		<key name="sasl-username" type="s">
+			<default>""</default>
+		</key>
+		<!-- These should be in libsecret when possible -->
+		<key name="server-password" type="s">
+			<default>""</default>
+		</key>
+		<key name="sasl-password" type="s">
+			<default>""</default>
+		</key>
+		<key name="encoding" type="s">
+			<default>"UTF-8"</default>
+		</key>
+	</schema>
+
+	<schema id="se.tingping.context">
+		<key name="stripcolor" type="b">
+			<summary>Strip colors from incoming messages</summary>
+			<default>false</default>
+		</key>
+		<key name="hide-joinpart" type="b">
+			<summary>Hide join and part messages</summary>
+			<default>false</default>
+		</key>
+	</schema>
+
+	<schema id="se.tingping.theme">
+		<key name="color00" type="s">
+			<summary>Color</summary>
+			<default>"#D3D7CF"</default>
+		</key>
+		<key name="color01" type="s">
+			<summary>Color</summary>
+			<default>"#2E3436"</default>
+		</key>
+		<key name="color02" type="s">
+			<summary>Color</summary>
+			<default>"#3465A4"</default>
+		</key>
+		<key name="color03" type="s">
+			<summary>Color</summary>
+			<default>"#4E9A06"</default>
+		</key>
+		<key name="color04" type="s">
+			<summary>Color</summary>
+			<default>"#CC0000"</default>
+		</key>
+		<key name="color05" type="s">
+			<summary>Color</summary>
+			<default>"#8F3902"</default>
+		</key>
+		<key name="color06" type="s">
+			<summary>Color</summary>
+			<default>"#5C3566"</default>
+		</key>
+		<key name="color07" type="s">
+			<summary>Color</summary>
+			<default>"#CE5C00"</default>
+		</key>
+		<key name="color08" type="s">
+			<summary>Color</summary>
+			<default>"#C4A000"</default>
+		</key>
+		<key name="color09" type="s">
+			<summary>Color</summary>
+			<default>"#73D216"</default>
+		</key>
+		<key name="color10" type="s">
+			<summary>Color</summary>
+			<default>"#11A879"</default>
+		</key>
+		<key name="color11" type="s">
+			<summary>Color</summary>
+			<default>"#58A19D"</default>
+		</key>
+		<key name="color12" type="s">
+			<summary>Color</summary>
+			<default>"#57799E"</default>
+		</key>
+		<key name="color13" type="s">
+			<summary>Color</summary>
+			<default>"#A04365"</default>
+		</key>
+		<key name="color14" type="s">
+			<summary>Color</summary>
+			<default>"#555753"</default>
+		</key>
+		<key name="color15" type="s">
+			<summary>Color</summary>
+			<default>"#888A85"</default>
+		</key>
+	</schema>
+</schemalist>
