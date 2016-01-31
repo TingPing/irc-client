@@ -78,6 +78,17 @@ test_message (void)
 	g_assert_null (msg->words_eol[0]);
 
   	irc_message_free (msg);
+
+	msg = irc_message_new ("@time=2015-06-16T19:02:58.651Z;te-st1=\\:\\s\\\\\\ttest;thing;something=; PING");
+
+	g_assert_cmpstr (irc_message_get_tag_value (msg, "te-st1"), ==, "; \\ttest");
+	g_assert_cmpint (msg->timestamp, ==, 1434481378);
+	g_assert_null (irc_message_get_tag_value (msg, "junk"));
+	g_assert_null (irc_message_get_tag_value (msg, "something"));
+	g_assert_true (irc_message_has_tag (msg, "thing"));
+	g_assert_false (irc_message_has_tag (msg, "junk"));
+
+	irc_message_free (msg);
 }
 
 static void

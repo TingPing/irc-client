@@ -74,20 +74,100 @@ create_words (const char *content, GStrv *words_in, GStrv *words_eol_in)
 }
 
 static inline time_t
-tags_get_time (char *tags)
+tags_get_time (IrcMessage *msg)
 {
 	GTimeVal tv;
-	char *p = irc_strcasestr (tags, "time=");
-	if (p == NULL)
+	const char *val = irc_message_get_tag_value (msg, "time");
+	if (val == NULL)
 		return 0;
 
-	if (!g_time_val_from_iso8601 (p + 5, &tv))
+	if (!g_time_val_from_iso8601 (val, &tv))
 		return 0;
 
 	// NOTE: This still uses 32bit timestamps
 	// glib supposedly will fix this someday...
 	// or we can just modify theirs if needed
 	return tv.tv_sec;
+}
+
+static inline char
+get_escaped_char (const char c)
+{
+	switch (c)
+	{
+	case 's':
+		return ' ';
+	case 'r':
+		return '\r';
+	case 'n':
+		return '\n';
+	case ':':
+		return ';';
+	default:
+		return c;
+	}
+}
+
+static gssize
+parse_tags (GHashTable *table, const char *tags)
+{
+	const char *start = tags;
+	gsize ki = 0, vi = 0;
+	char key_buf[510], value_buf[510];
+	gboolean in_val = FALSE, in_esc = FALSE;
+
+	while (*tags)
+	{
+		if (*tags == ' ' || *tags == ';')
+		{
+			in_val = in_esc = FALSE;
+
+			if (G_UNLIKELY(ki == 0))
+			{
+				g_debug ("Got empty key when parsing tags");
+			}
+			else
+			{
+				key_buf[ki] = '\0';
+				value_buf[vi] = '\0';
+
+				if (G_UNLIKELY(!g_hash_table_replace (table, g_strdup (key_buf), vi ? g_strdup (value_buf) : NULL)))
+					g_debug ("Duplicate tag in message: %s=%s", key_buf, value_buf);
+
+				ki = vi = 0;
+			}
+			if (*tags == ' ')
+				return tags - start;
+		}
+		else if (*tags == '=')
+		{
+			in_val = TRUE;
+		}
+		else
+		{
+			if (!in_val)
+			{
+#ifdef G_DEBUG
+				if (G_UNLIKELY(!g_ascii_isalnum (*tags) && *tags != '-'))
+					g_debug ("Tag key has invalid character '%c'", *tags);
+#endif
+				key_buf[ki++] = *tags;
+			}
+			else
+			{
+				if (*tags == '\\' && !in_esc)
+					in_esc = TRUE;
+				else
+				{
+					value_buf[vi++] = in_esc ? get_escaped_char (*tags) : *tags;
+					in_esc = FALSE;
+				}
+			}
+		}
+		tags++;
+	}
+
+	return -1;
 }
 
 /**
@@ -102,19 +182,18 @@ irc_message_new (const char *line)
   	g_return_val_if_fail (line != NULL, NULL);
 
 	IrcMessage *msg = g_new0 (IrcMessage, 1);
+	msg->tags = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	char *p = (char*)line;
 
 	if (*p == '@')
 	{
-		char *s = strchr (p, ' ');
-		if (s != NULL)
-			msg->tags = g_strndup (p + 1, (guintptr)(s - p - 1));
-		else
+		gssize len = parse_tags (msg->tags, p + 1);
+		if (len == -1)
 			goto cleanup;
 
-		msg->timestamp = tags_get_time (msg->tags);
+		msg->timestamp = tags_get_time (msg);
 
-		p = s + 1;
+		p += len + 1;
 	}
 
 	if (*p == ':')
@@ -179,6 +258,7 @@ irc_message_free (IrcMessage *msg)
 {
 	if (msg)
 	{
+		g_hash_table_unref (msg->tags);
 		g_free (msg->sender);
 		g_free (msg->command);
 		g_free (msg->content);
@@ -201,6 +281,7 @@ irc_message_copy (IrcMessage *msg)
 
 	IrcMessage *copy = g_new (IrcMessage, 1);
 
+	copy->tags = g_hash_table_ref (msg->tags);
 	copy->sender = g_strdup (msg->sender);
 	copy->command = g_strdup (msg->command);
 	copy->numeric = msg->numeric;
@@ -208,4 +289,43 @@ irc_message_copy (IrcMessage *msg)
 	create_words (copy->content, &copy->words, &copy->words_eol);
 
 	return copy;
+}
+
+/**
+ * irc_message_has_tag:
+ * @msg: Message to check
+ * @tag: Tag to look for
+ *
+ * Returns: %TRUE if tag is in message
+ */
+gboolean
+irc_message_has_tag (IrcMessage *msg, const char *tag)
+{
+	return g_hash_table_contains (msg->tags, tag);
+}
+
+/**
+ * irc_message_get_tags:
+ * @msg: Message to get tags
+ * @len: (out): Length of returned array
+ *
+ * Returns: (transfer full): Newly allocated array of keys use g_strfreev() to free
+ */
+GStrv
+irc_message_get_tags (IrcMessage *msg, guint *len)
+{
+	return (GStrv)g_hash_table_get_keys_as_array (msg->tags, len);
+}
+
+/**
+ * irc_message_get_tag_value:
+ * @msg: Message to get value from
+ * @tag: Key to lookup value to
+ *
+ * Returns: Value to key or %NULL
+ */
+const char *
+irc_message_get_tag_value (IrcMessage *msg, const char *tag)
+{
+	return g_hash_table_lookup (msg->tags, tag);
 }

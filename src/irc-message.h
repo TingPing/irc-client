@@ -42,7 +42,7 @@ typedef struct {
 
   	/*< private >*/
 	char *content;
-	char *tags;
+	GHashTable *tags;
 
 	/*< public >*/
 	time_t timestamp;
@@ -54,6 +54,10 @@ GType irc_message_get_type (void) G_GNUC_CONST;
 IrcMessage *irc_message_new (const char *line);
 IrcMessage *irc_message_copy (IrcMessage *msg);
 void irc_message_free (IrcMessage *msg);
+
+GStrv irc_message_get_tags (IrcMessage *msg, guint *len);
+gboolean irc_message_has_tag (IrcMessage *msg, const char *tag);
+const char * irc_message_get_tag_value (IrcMessage *msg, const char *tag);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(IrcMessage, irc_message_free)
 
