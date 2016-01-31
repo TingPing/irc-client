@@ -765,7 +765,7 @@ const struct SupportedCap supported_caps[] =
 	{ "userhost-in-names", IRC_SERVER_CAP_USERHOST_IN_NAMES },
 	{ "extended-join", IRC_SERVER_CAP_EXTENDED_JOIN },
 	{ "account-notify", IRC_SERVER_CAP_ACCOUNT_NOTIFY },
-	{ "cghost", IRC_SERVER_CAP_CHGHOST },
+	{ "chghost", IRC_SERVER_CAP_CHGHOST },
 	{ "multi-prefix", IRC_SERVER_CAP_MULTI_PREFIX },
 	{ "sasl", IRC_SERVER_CAP_SASL },
 	{ "away-notify" , IRC_SERVER_CAP_AWAY_NOTIFY },
