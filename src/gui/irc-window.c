@@ -157,13 +157,13 @@ on_front_context_changed (IrcContextManager *mgr, IrcContext *ctx, gpointer data
 		if (IRC_IS_CHANNEL (ctx) && ctx_ui->popover == NULL)
 		{
 			ctx_ui->popover = GTK_WIDGET(g_object_ref (
-									irc_userlist_new (GTK_TREE_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))))));
+									irc_userlist_new (G_LIST_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))))));
 		}
 		gtk_menu_button_set_popover (priv->usersbutton, ctx_ui->popover);
 		gtk_header_bar_set_title (priv->headerbar, irc_context_get_name (ctx));
 		if (IRC_IS_CHANNEL(ctx))
 		{
-			irc_entry_set_completion_model (priv->entry, GTK_TREE_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))));
+			//irc_entry_set_completion_model (priv->entry, GTK_TREE_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))));
 			// FIXME: The topic changes
 			update_topic (G_OBJECT(ctx), NULL, priv->headerbar);
 		}

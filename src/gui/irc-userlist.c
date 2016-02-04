@@ -24,6 +24,7 @@
 #include <glib/gi18n.h>
 #include "irc-user.h"
 #include "irc-userlist.h"
+#include "irc-user-list.h"
 
 struct _IrcUserlist
 {
@@ -43,27 +44,39 @@ enum {
 
 G_DEFINE_TYPE_WITH_PRIVATE (IrcUserlist, irc_userlist, GTK_TYPE_POPOVER)
 
+#if 0
 static void
 on_search_changed (GtkSearchEntry *entry, gpointer data)
 {
-	GtkTreeModelFilter *filter = GTK_TREE_MODEL_FILTER(data);
-
-	gtk_tree_model_filter_refilter (filter);
+	gtk_list_box_invalidate_filter (GTK_LIST_BOX(data));
 }
 
 static gboolean
-filter_func (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+filter_func (GtkListBoxRow *row, gpointer data)
 {
 	const char *filter = gtk_entry_get_text (GTK_ENTRY(data));
 
 	if (!*filter)
 		return TRUE;
 
-   	g_autoptr(IrcUser) user;
-	gtk_tree_model_get (model, iter, COL_USER, &user, -1);
+   	IrcUser *user = g_object_get_data (G_OBJECT(row), "user");
 	if (irc_strcasestr (user->nick, filter) != NULL)
 		return TRUE;
 	return FALSE;
+}
+#endif
+
+static GtkWidget *
+create_widget (gpointer ptr, gpointer data)
+{
+	IrcUserListItem *item = IRC_USER_LIST_ITEM(ptr);
+	GtkWidget *row = gtk_list_box_row_new ();
+
+	GtkWidget *lbl = gtk_label_new (item->user->nick);
+	gtk_container_add (GTK_CONTAINER(row), lbl);
+
+	gtk_widget_show_all (row);
+	return row;
 }
 
 /**
@@ -73,32 +86,33 @@ filter_func (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
  * Returns: (transfer full): New userlist
  */
 IrcUserlist *
-irc_userlist_new (GtkTreeModel *model)
+irc_userlist_new (GListModel *model)
 {
 	GtkBox *box = GTK_BOX(gtk_box_new (GTK_ORIENTATION_VERTICAL, 0));
 	GtkWidget *sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_widget_set_size_request (sw, -1, 400); // TODO: Correct sizing
-	GtkTreeModel *modelfilter = gtk_tree_model_filter_new (model, NULL);
-  	GtkWidget *view = gtk_tree_view_new_with_model (modelfilter);
-	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(view), TRUE);
-	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(view), FALSE);
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW(view), 0, _("Users"),
-												gtk_cell_renderer_text_new (), "text", 0, NULL);
+
+	GtkWidget *view = gtk_list_box_new ();
+	gtk_list_box_bind_model (GTK_LIST_BOX(view), model, create_widget, NULL, NULL);
 	gtk_container_add (GTK_CONTAINER(sw), view);
 
-
+#if 0
 	GtkWidget *entry = gtk_search_entry_new ();
-	g_signal_connect (entry, "search-changed", G_CALLBACK(on_search_changed), modelfilter);
-  	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER(modelfilter), filter_func, entry, NULL);
+  	gtk_list_box_set_filter_func (GTK_LIST_BOX(view), filter_func, entry, NULL);
+	g_signal_connect (entry, "search-changed", G_CALLBACK(on_search_changed), view);
 
 	gtk_box_pack_start (box, entry, FALSE, TRUE, 0);
-	gtk_box_pack_start (box, sw, TRUE, TRUE, 0);
+#endif
+
+  	gtk_box_pack_start (box, sw, TRUE, TRUE, 0);
 	gtk_widget_show_all (GTK_WIDGET(box));
 	IrcUserlist *list = g_object_new (IRC_TYPE_USERLIST, "child", box, NULL);
+
+#if 0
   	IrcUserlistPrivate *priv = irc_userlist_get_instance_private (list);
 	priv->search_entry = GTK_SEARCH_ENTRY(entry);
-
+#endif
 
 	return list;
 }

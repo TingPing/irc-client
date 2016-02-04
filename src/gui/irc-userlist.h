@@ -20,6 +20,7 @@
 #define IRC_USERLIST_H
 
 #include <gtk/gtk.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -27,7 +28,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (IrcUserlist, irc_userlist, IRC, USERLIST, GtkPopover)
 
-IrcUserlist *irc_userlist_new (GtkTreeModel *model);
+IrcUserlist *irc_userlist_new (GListModel *model);
 
 G_END_DECLS
 

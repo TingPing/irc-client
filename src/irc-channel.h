@@ -20,9 +20,7 @@
 
 #pragma once
 
-#include <gio/gio.h>
-#include <gtk/gtk.h> // Just for GtkListStore
-#include "irc-user.h"
+#include "irc-user-list.h"
 #include "irc-context.h"
 #include "irc-utils.h"
 
@@ -38,13 +36,9 @@ struct _IrcChannel
 };
 
 IrcChannel *irc_channel_new (IrcContext *parent, const char *name) NON_NULL();
-void irc_channel_add_user (IrcChannel *self, IrcUser *user) NON_NULL();
-void irc_channel_add_users (IrcChannel *self, GPtrArray *users) NON_NULL();
-gboolean irc_channel_remove_user (IrcChannel *self, IrcUser *user) NON_NULL();
-gboolean irc_channel_refresh_user (IrcChannel *self, IrcUser *user) NON_NULL();
 void irc_channel_part (IrcChannel *self) NON_NULL();
 void irc_channel_set_joined (IrcChannel *self, gboolean joined) NON_NULL(1);
-GtkListStore *irc_channel_get_users (IrcChannel *self) NON_NULL() RETURNS_NON_NULL;
+IrcUserList *irc_channel_get_users (IrcChannel *self) NON_NULL() RETURNS_NON_NULL;
 GActionGroup *irc_channel_get_action_group (void);
 
 G_END_DECLS

@@ -368,7 +368,8 @@ inbound_part (IrcServer *self, IrcMessage *msg)
 		irc_context_print_with_time (IRC_CONTEXT(channel), formatted, msg->timestamp);
 	}
 
-	irc_channel_remove_user (channel, user);
+	IrcUserList *ulist = irc_channel_get_users (channel);
+	irc_user_list_remove (ulist, user);
 }
 
 
@@ -377,8 +378,9 @@ quit_foreach (gpointer key, gpointer value, gpointer data)
 {
 	IrcChannel *channel = IRC_CHANNEL(value);
 	IrcUser *user = IRC_USER(data);
+	IrcUserList *ulist = irc_channel_get_users (channel);
 
-	if (irc_channel_remove_user (channel, user)	&&
+	if (irc_user_list_remove (ulist, user)	&&
 		!irc_context_lookup_setting_boolean (IRC_CONTEXT(channel), "hide-joinpart"))
 	{
   		g_autofree char *formatted = g_strdup_printf ("\035<-- %s quit", user->nick);
@@ -465,7 +467,8 @@ inbound_join (IrcServer *self, IrcMessage *msg)
 		irc_context_print_with_time (IRC_CONTEXT(channel), formatted, msg->timestamp);
 	}
 
-	irc_channel_add_user (channel, user);
+	IrcUserList *ulist = irc_channel_get_users (channel);
+	irc_user_list_add (ulist, user, NULL);
 }
 
 static void
@@ -487,14 +490,15 @@ inbound_names (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
+	IrcUserList *ulist = irc_channel_get_users (channel);
+#if 0
 	// First part of NAMES, clear existing list
 	if (FALSE) // TODO
 	{
 		GtkListStore *list = irc_channel_get_users (channel);
 		gtk_list_store_clear (list); // FIXME: This might free users that will just be re-created...
 	}
-
-	GPtrArray *new_users = g_ptr_array_new_with_free_func (g_object_unref);
+#endif
 	// Starts at 3 as thats where the users names start
 	for (gsize i = 3; i < len; ++i)
 	{
@@ -516,12 +520,13 @@ inbound_names (IrcServer *self, IrcMessage *msg)
 			user = irc_user_new (msg->words[i] + offset); // Want full-host here
 			usertable_insert (self, user);
 		}
-		// TODO: Set the users prefix
-		g_ptr_array_add (new_users, user);
-	}
 
-	irc_channel_add_users (channel, new_users);
-	g_ptr_array_free (new_users, TRUE);
+		g_autofree char *prefix = NULL;
+		if (offset >= (*nick == ':' ? 2 : 1))
+			prefix = g_strndup (nick, offset);
+
+		irc_user_list_add (ulist, user, prefix);
+	}
 }
 
 static void
@@ -597,6 +602,8 @@ inbound_whox (IrcServer *self, IrcMessage *msg)
 	{
 		g_object_set (user, "away", *msg->words[7] == 'G', NULL);
 	}
+
+	// We could grab the users prefix here, but we don't need it?
 }
 
 static void
@@ -604,8 +611,9 @@ nick_change_foreach (gpointer key, gpointer val, gpointer data)
 {
 	IrcChannel *channel = IRC_CHANNEL(val);
 	IrcUser *user = IRC_USER(data);
+	IrcUserList *ulist = irc_channel_get_users (channel);
 
-	if (irc_channel_refresh_user (channel, user))
+	if (irc_user_list_contains (ulist, user))
 	{
 		g_autofree char *formatted = g_strdup_printf ("\035* %s changed nick", user->nick);
 		irc_context_print (IRC_CONTEXT(channel), formatted);
@@ -689,6 +697,34 @@ inbound_account (IrcServer *self, IrcMessage *msg)
 
 	const char *account = msg->words[0];
 	g_object_set (user, "account", *account == '*' ? NULL : account, NULL);
+}
+
+static void
+inbound_mode (IrcServer *self, IrcMessage *msg)
+{
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	IrcChannel *channel = g_hash_table_lookup (priv->chantable, msg->words[0]);
+	if (channel == NULL)
+	{
+		g_warning("Incoming MODE for unknown channel %s", msg->words[0]);
+		return;
+	}
+
+#if 0
+	// TODO: Loop over mode changes and handle them
+
+		IrcUser *user = g_hash_table_lookup (priv->usertable, ...);
+		if (user == NULL)
+		{
+			g_warning ("Incoming MODE for unknown user %s", ...);
+			return;
+		}
+
+		IrcUserList *ulist = irc_channel_get_users (channel);
+		irc_user_list_set_users_prefix (ulist, user, ...);
+
+		// TODO: Print out MODE message
+#endif
 }
 
 static void
@@ -1063,6 +1099,7 @@ handle_incoming (IrcServer *self, const char *line)
 			inbound_cap (self, msg);
 			break;
 		case MODE:
+			inbound_mode (self, msg);
 			break;
 		case CHGHOST:
 			inbound_chghost (self, msg);

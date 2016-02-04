@@ -33,7 +33,7 @@
 typedef struct
 {
 	IrcContext *parent;
-	GtkListStore *userlist;
+	IrcUserList *userlist;
 	char *topic;
 	gboolean joined;
 } IrcChannelPrivate;
@@ -72,7 +72,7 @@ irc_channel_set_joined (IrcChannel *self, gboolean joined)
 
 	if (!joined)
 	{
-		gtk_list_store_clear (priv->userlist);
+		irc_user_list_clear (priv->userlist);
 		g_clear_pointer (&priv->topic, g_free);
 	}
 	g_object_notify (G_OBJECT(self), "active");
@@ -83,7 +83,7 @@ irc_channel_set_joined (IrcChannel *self, gboolean joined)
  *
  * Returns: (transfer none): Userlist
  */
-GtkListStore *
+IrcUserList *
 irc_channel_get_users (IrcChannel *self)
 {
 	IrcChannelPrivate *priv = irc_channel_get_instance_private (self);
@@ -100,105 +100,6 @@ irc_channel_part (IrcChannel *self)
 
 	IrcServer *server = IRC_SERVER(irc_context_get_parent (IRC_CONTEXT(self)));
   	irc_server_write_linef (server, "PART %s", self->name);
-}
-
-/**
- * irc_channel_refresh_user:
- */
-gboolean
-irc_channel_refresh_user (IrcChannel *self, IrcUser *user)
-{
-	IrcChannelPrivate *priv = irc_channel_get_instance_private (self);
-	GtkTreeModel *model = GTK_TREE_MODEL(priv->userlist);
-	GtkTreeIter iter;
-
-	if (!gtk_tree_model_get_iter_first (model, &iter))
-		return FALSE;
-
-	do {
-		g_autoptr(IrcUser) this_user;
-		gtk_tree_model_get (model, &iter, COL_USER, &this_user, -1);
-		if (this_user == user)
-		{
-			gtk_list_store_set (priv->userlist, &iter, COL_NICK, user->nick, -1);
-			return TRUE;
-		}
-	} while (gtk_tree_model_iter_next (model, &iter));
-
-	return FALSE;
-}
-
-/**
- * irc_channel_remove_user:
- *
- * Returns: %TRUE if found and removed else %FALSE
- */
-gboolean
-irc_channel_remove_user (IrcChannel *self, IrcUser *user)
-{
-	IrcChannelPrivate *priv = irc_channel_get_instance_private (self);
-	GtkTreeModel *model = GTK_TREE_MODEL(priv->userlist);
-	GtkTreeIter iter;
-
-	if (!gtk_tree_model_get_iter_first (model, &iter))
-		return FALSE;
-
-	do {
-		g_autoptr(IrcUser) this_user;
-		gtk_tree_model_get (model, &iter, COL_USER, &this_user, -1);
-		if (this_user == user)
-		{
-			gtk_list_store_remove (priv->userlist, &iter);
-			return TRUE;
-		}
-	} while (gtk_tree_model_iter_next (model, &iter));
-
-	return FALSE;
-}
-
-/**
- * irc_channel_add_users:
- * @users: (element-type IrcUser): List of users
- */
-void
-irc_channel_add_users (IrcChannel *self, GPtrArray *users)
-{
-	IrcChannelPrivate *priv = irc_channel_get_instance_private (self);
-
-	// Only trigger the resort once
-	// Ideally we could use gtk_list_store_insert_with_values() and avoid
-	// mutliple row_inserted signals
-	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(priv->userlist),
-										GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID, GTK_SORT_ASCENDING);
-	for (uint i = 0; i < users->len; ++i)
-	{
-		irc_channel_add_user (self, users->pdata[i]);
-	}
-	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(priv->userlist), COL_USER, GTK_SORT_ASCENDING);
-}
-
-/**
- * irc_channel_add_user:
- */
-void
-irc_channel_add_user (IrcChannel *self, IrcUser *user)
-{
-	IrcChannelPrivate *priv = irc_channel_get_instance_private (self);
-
-	gtk_list_store_insert_with_values (priv->userlist, NULL, -1,
-									COL_NICK, user->nick, COL_USER, user, -1);
-}
-
-static int
-irc_channel_sort_nicks (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b, gpointer data)
-{
-	g_autoptr(IrcUser) user1;
-	g_autoptr(IrcUser) user2;
-
-	gtk_tree_model_get (model, a, COL_USER, &user1, -1);
-	gtk_tree_model_get (model, b, COL_USER, &user2, -1);
-
-	return irc_str_cmp (user1->nick, user2->nick);
 }
 
 static GMenuModel *
@@ -359,7 +260,5 @@ irc_channel_init (IrcChannel *self)
 
 	priv->joined = TRUE;
 
-	priv->userlist = gtk_list_store_new (N_COL, G_TYPE_STRING, IRC_TYPE_USER);
-	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(priv->userlist), COL_USER, GTK_SORT_ASCENDING);
-	gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(priv->userlist), COL_USER, irc_channel_sort_nicks, NULL, NULL);
+	priv->userlist = irc_user_list_new ();
 }

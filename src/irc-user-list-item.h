@@ -1,6 +1,6 @@
-/* window.h
+/* irc-user-list-item.h
  *
- * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
+ * Copyright (C) 2016 Patrick Griffis <tingping@tingping.se>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,19 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IRC_WINDOW_H
-#define IRC_WINDOW_H
+#pragma once
 
-#include <gtk/gtk.h>
-#include <gio/gio.h>
+#include <glib-object.h>
+#include "irc-utils.h"
+#include "irc-user.h"
 
 G_BEGIN_DECLS
 
-#define IRC_TYPE_WINDOW (irc_window_get_type())
-G_DECLARE_FINAL_TYPE (IrcWindow, irc_window, IRC, WINDOW, GtkApplicationWindow)
+#define IRC_TYPE_USER_LIST_ITEM (irc_user_list_item_get_type())
+G_DECLARE_FINAL_TYPE (IrcUserListItem, irc_user_list_item, IRC, USER_LIST_ITEM, GObject)
 
-IrcWindow *irc_window_new (GApplication *application);
+struct _IrcUserListItem
+{
+	GObject parent_instance;
+
+	char *prefix;
+	IrcUser *user;
+};
+
+IrcUserListItem *irc_user_list_item_new (IrcUser *user, const char *prefix) NON_NULL(1);
 
 G_END_DECLS
-
-#endif /* IRC_WINDOW_H */

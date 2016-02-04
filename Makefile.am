@@ -16,6 +16,8 @@ libirc_la_SOURCES = \
 	src/irc-server.c \
 	src/irc-query.c \
 	src/irc-user.c \
+	src/irc-user-list.c \
+	src/irc-user-list-item.c \
 	src/irc-utils.c \
 	src/gui/irc-application.c \
 	src/gui/irc-window.c \
@@ -40,6 +42,8 @@ pkginclude_HEADERS = \
 	src/irc-server.h \
 	src/irc-query.h \
 	src/irc-user.h \
+	src/irc-user-list.h \
+	src/irc-user-list-item.h \
 	src/irc-utils.h \
 	src/gui/irc-application.h \
 	src/gui/textview/irc-chatview.h \
