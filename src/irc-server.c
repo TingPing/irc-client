@@ -141,9 +141,9 @@ inbound_ctcp (IrcServer *self, IrcMessage *msg)
 {
  	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
-	if (irc_str_equal(msg->words[0], priv->me->nick))
+	if (irc_str_equal(irc_message_get_param(msg, 0), priv->me->nick))
 	{
-		if (g_str_equal (msg->words[1], ":\001VERSION\001"))
+		if (g_str_equal (irc_message_get_param(msg, 1), "\001VERSION\001"))
 		{
 			g_autofree char *nick = nick_from_host (msg->sender);
 			irc_server_write_linef (self, "NOTICE %s :\001VERSION TingPingChat\001", nick);
@@ -206,10 +206,11 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 
 	// TODO: Make this function less ugly
 
-	if (g_str_has_prefix (msg->words[1], ":\001") &&
-		g_str_has_suffix (msg->words_eol[1], "\001"))
+	const char *first_word = irc_message_get_param(msg, 1);
+	if (g_str_has_prefix (first_word, "\001") &&
+		g_str_has_suffix (first_word, "\001"))
 	{
-		if (!g_str_has_prefix (msg->words[1], ":\001ACTION"))
+		if (!g_str_has_prefix (first_word, "\001ACTION"))
 		{
 			inbound_ctcp (self, msg);
 			return;
@@ -222,12 +223,12 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	{
 		is_you = TRUE;
 	}
-	if (strchr (priv->chan_types, msg->words[0][0]) == NULL)
+	if (strchr (priv->chan_types, irc_message_get_param(msg, 0)[0]) == NULL)
 	{
 		if (is_you)
 		{
 			g_free (ctx_nick);
-			ctx_nick = g_strdup (msg->words[0]);
+			ctx_nick = g_strdup (irc_message_get_param(msg, 0));
 		}
 		IrcContextManager *mgr = irc_context_manager_get_default ();
 		g_autoptr(IrcUser) user = usertable_lookup (self, ctx_nick);
@@ -255,7 +256,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	}
 	else
 	{
-		IrcChannel *chan = g_hash_table_lookup (priv->chantable, msg->words[0]);
+		IrcChannel *chan = g_hash_table_lookup (priv->chantable, irc_message_get_param(msg, 0));
 		if (chan == NULL)
 		{
 			g_warning ("Recieved PRIVMSG for unknown channel");
@@ -264,15 +265,9 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 		dest_ctx = IRC_CONTEXT(chan);
 	}
 
-	if (g_strv_length (msg->words) < (2 + (uint)is_action))
-	{
-		g_warning ("PRIVMSG is too short");
-		return;
-	}
-
 	g_autofree char *formatted;
 	g_autofree char *nick = nick_from_host (msg->sender);
-	if (!is_you && irc_strcasestr (msg->words_eol[1 + is_action], priv->me->nick) != NULL)
+	if (!is_you && irc_strcasestr (irc_message_get_param(msg, 1), priv->me->nick) != NULL)
 		is_highlight = TRUE;
 
 	g_autofree char *stripped = NULL;
@@ -280,18 +275,18 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 
 	if (is_highlight || !is_chan || strip)
 	{
-		stripped = irc_strip_attributes (msg->words_eol[1 + is_action]);
+		stripped = irc_strip_attributes (irc_message_get_param(msg, 1) + (is_action ? 8 : 0));
 		if (is_action)
 			stripped[strlen(stripped) - 1] = '\0';
 	}
 
 	if (!is_action)
 	{
-		const char *text = (strip ? stripped : msg->words_eol[1]) + 1;
+		const char *text = (strip ? stripped : irc_message_get_param(msg, 1));
 		if (is_highlight && is_chan && !is_you)
 		{
 			if (!msg->timestamp)
-				show_notification (dest_ctx, "Highlight", stripped + 1);
+				show_notification (dest_ctx, "Highlight", stripped);
 			formatted = g_strdup_printf ("\002\00303%s\002 %s", nick, text);
 		}
 		else if (is_you)
@@ -302,14 +297,14 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 		{
 			if (!is_chan && !msg->timestamp)
 			{
-				show_notification (dest_ctx, "Private Message", stripped + 1);
+				show_notification (dest_ctx, "Private Message", stripped);
 			}
 			formatted = g_strdup_printf ("\00302%s\00399 %s", nick, text);
 		}
 	}
 	else
 	{
-		const char *text = (strip ? stripped : msg->words_eol[2]);
+		const char *text = (strip ? stripped : (irc_message_get_param(msg, 1) + 8));
 		const int len = (int)strlen (text) - (strip ? 0 : 1);
 		if (is_highlight && is_chan)
 		{
@@ -340,7 +335,7 @@ inbound_part (IrcServer *self, IrcMessage *msg)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
-  	IrcChannel *channel = g_hash_table_lookup (priv->chantable, msg->words[0]);
+	IrcChannel *channel = g_hash_table_lookup (priv->chantable, irc_message_get_param(msg, 0));
 	if (channel == NULL)
 	{
 		g_warning ("Got PART for unknown channel");
@@ -407,8 +402,7 @@ static void
 inbound_ujoin (IrcServer *self, IrcMessage *msg)
 {
   	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	g_assert (msg->words[0] != NULL);
-  	const char *chan_name = msg->words[0];
+	const char *chan_name = irc_message_get_param(msg, 0);
 	if (chan_name[0] == ':')
 		chan_name++;
 
@@ -440,7 +434,7 @@ inbound_join (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	const char *chan_name = *msg->words[0] == ':' ? msg->words[0] + 1 : msg->words[0];
+	const char *chan_name = irc_message_get_param(msg, 0);
 	IrcChannel *channel = g_hash_table_lookup (priv->chantable, chan_name);
 	if (channel == NULL)
 	{
@@ -454,8 +448,8 @@ inbound_join (IrcServer *self, IrcMessage *msg)
 		user = irc_user_new (msg->sender);
 		if (priv->caps & IRC_SERVER_CAP_EXTENDED_JOIN)
 		{
-			const char *account = msg->words[1];
-			const char *realname = msg->words_eol[2] + 1;
+			const char *account = irc_message_get_param(msg, 1);
+			const char *realname = irc_message_get_param(msg, 2);
 			g_object_set (user, "account", *account == '*' ? NULL : account, "realname", realname, NULL);
 		}
 		usertable_insert (self, user);
@@ -475,7 +469,7 @@ static void
 inbound_names (IrcServer *self, IrcMessage *msg)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	gsize len = g_strv_length (msg->words);
+	gsize len = g_strv_length (msg->params);
 
 	if (len < 4)
 	{
@@ -483,7 +477,7 @@ inbound_names (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	IrcChannel *channel = g_hash_table_lookup (priv->chantable, msg->words[2]);
+	IrcChannel *channel = g_hash_table_lookup (priv->chantable, irc_message_get_param(msg, 2));
 	if (channel == NULL)
 	{
 		g_warning ("Got names for unknown channel");
@@ -499,30 +493,29 @@ inbound_names (IrcServer *self, IrcMessage *msg)
 		gtk_list_store_clear (list); // FIXME: This might free users that will just be re-created...
 	}
 #endif
-	// Starts at 3 as thats where the users names start
-	for (gsize i = 3; i < len; ++i)
+
+	g_auto(GStrv) names = g_strsplit (irc_message_get_param (msg, 3), " ", 0);
+	for (gsize i = 0; names[i]; ++i)
 	{
 		g_autofree char *nick;
 		if (priv->caps & IRC_SERVER_CAP_USERHOST_IN_NAMES)
-			nick = nick_from_host (msg->words[i]);
+			nick = nick_from_host (names[i]);
 		else
-			nick = g_strdup (msg->words[i]);
+			nick = g_strdup (names[i]);
 
 		gsize offset = 0;
-		if (*nick == ':')
-			++offset;
 		while (strchr (priv->nick_prefixes, nick[offset]) != NULL)
 			++offset;
 
 		IrcUser *user = usertable_lookup (self, nick + offset);
 		if (user == NULL)
 		{
-			user = irc_user_new (msg->words[i] + offset); // Want full-host here
+			user = irc_user_new (names[i] + offset); // Want full-host here
 			usertable_insert (self, user);
 		}
 
 		g_autofree char *prefix = NULL;
-		if (offset >= (*nick == ':' ? 2 : 1))
+		if (offset)
 			prefix = g_strndup (nick, offset);
 
 		irc_user_list_add (ulist, user, prefix);
@@ -536,7 +529,7 @@ inbound_endofnames (IrcServer *self, IrcMessage *msg)
 	if (!(priv->caps & IRC_SERVER_SUPPORT_WHOX))
 		return;
 
-	irc_server_write_linef (self, "WHO %s %%chtsunfra,152", msg->words[1]);
+	irc_server_write_linef (self, "WHO %s %%chtsunfra,152", irc_message_get_param(msg, 1));
 }
 
 static char *
@@ -575,11 +568,11 @@ inbound_whox (IrcServer *self, IrcMessage *msg)
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
 	// We use this numeric in automated WHOs (same as [he]xchat)
-	if (!g_str_equal (msg->words[1], "152"))
+	if (!g_str_equal (irc_message_get_param(msg, 1), "152"))
 		return;
 
 	// yournick 152 #channel ~ident host servname nick H account :realname
-	const char *nick = msg->words[6];
+	const char *nick = irc_message_get_param(msg, 6);
 	IrcUser *user = g_hash_table_lookup (priv->usertable, nick);
 	if (user == NULL)
 	{
@@ -587,20 +580,20 @@ inbound_whox (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	const char *account = msg->words[8];
-	const char *realname = msg->words_eol[9] + 1;
+	const char *account = irc_message_get_param(msg, 8);
+	const char *realname = irc_message_get_param(msg, 9);
 
 	g_object_set (user, "account", *account == '*' ? NULL : account, "realname", realname, NULL);
 
 	if (!(priv->caps & IRC_SERVER_CAP_USERHOST_IN_NAMES))
 	{
-		g_object_set (user, "hostname", msg->words[4], "username", msg->words[3], NULL);
+		g_object_set (user, "hostname", irc_message_get_param(msg, 4), "username", irc_message_get_param(msg, 3), NULL);
 	}
 
 	// If server doesn't have away-notify there is no point in setting this
 	if ((priv->caps & IRC_SERVER_CAP_AWAY_NOTIFY))
 	{
-		g_object_set (user, "away", *msg->words[7] == 'G', NULL);
+		g_object_set (user, "away", *irc_message_get_param(msg, 7) == 'G', NULL);
 	}
 
 	// We could grab the users prefix here, but we don't need it?
@@ -646,8 +639,7 @@ inbound_nick (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	g_assert (msg->words[0] != NULL);
-	change_users_nick (self, user, msg->words[0] + 1);
+	change_users_nick (self, user, irc_message_get_param(msg, 0));
 }
 
 static void
@@ -695,7 +687,7 @@ inbound_account (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	const char *account = msg->words[0];
+	const char *account = irc_message_get_param(msg, 0);
 	g_object_set (user, "account", *account == '*' ? NULL : account, NULL);
 }
 
@@ -703,10 +695,10 @@ static void
 inbound_mode (IrcServer *self, IrcMessage *msg)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	IrcChannel *channel = g_hash_table_lookup (priv->chantable, msg->words[0]);
+	IrcChannel *channel = g_hash_table_lookup (priv->chantable, irc_message_get_param(msg, 0));
 	if (channel == NULL)
 	{
-		g_warning("Incoming MODE for unknown channel %s", msg->words[0]);
+		g_warning("Incoming MODE for unknown channel %s", irc_message_get_param(msg, 0));
 		return;
 	}
 
@@ -739,8 +731,8 @@ inbound_away (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	g_object_set (user, "away", msg->words_eol[0] != NULL,
-			   "away-reason", msg->words_eol[0] ? msg->words_eol[0] + 1 : NULL, NULL);
+	g_object_set (user, "away", irc_message_get_param(msg, 0) != NULL,
+			   "away-reason", *irc_message_get_param(msg, 0) ? irc_message_get_param(msg, 0) : NULL, NULL);
 }
 
 static void
@@ -755,7 +747,7 @@ inbound_chghost (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	g_object_set (user, "username", msg->words[0], "hostname", msg->words[1], NULL);
+	g_object_set (user, "username", irc_message_get_param(msg, 0), "hostname", irc_message_get_param(msg, 1), NULL);
 }
 
 static void
@@ -773,7 +765,7 @@ inbound_authenticate_response (IrcServer *self, IrcMessage *msg)
 static void
 inbound_authenticate (IrcServer *self, IrcMessage *msg)
 {
-	if (g_str_equal (msg->words[0], "+"))
+	if (g_str_equal (irc_message_get_param(msg, 0), "+"))
 	{
 	  	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 		g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
@@ -816,7 +808,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 {
   	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
-	if (irc_str_equal (msg->words[1], "LS") || irc_str_equal (msg->words[1], "NEW"))
+	if (irc_str_equal (irc_message_get_param(msg, 1), "LS") || irc_str_equal (irc_message_get_param(msg, 1), "NEW"))
 	{
 	  	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
 		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
@@ -826,9 +818,9 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 		g_free (user);
 		g_free (pass);
 
-		const gboolean multiline = *msg->words[2] == '*';
+		const gboolean multiline = *irc_message_get_param(msg, 2) == '*';
 		priv->waiting_on_cap = multiline;
-		g_auto(GStrv) caps = g_strsplit (msg->words_eol[2 + (multiline ? 1 : 0)] + 1, " ", 0);
+		g_auto(GStrv) caps = g_strsplit (irc_message_get_param (msg, 2 + (multiline ? 1 : 0)), " ", 0);
 		char outbuf[512];
 		outbuf[0] = '\0';
 
@@ -867,9 +859,9 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			priv->sent_capend = TRUE;
 		}
 	}
-	else if (irc_str_equal (msg->words[1], "ACK"))
+	else if (irc_str_equal (irc_message_get_param(msg, 1), "ACK"))
 	{
-		g_auto(GStrv) caps = g_strsplit (msg->words_eol[2] + 1, " ", 0);
+		g_auto(GStrv) caps = g_strsplit (irc_message_get_param(msg, 2), " ", 0);
 
 		for (gsize i = 0; caps[i]; ++i)
 		{
@@ -895,9 +887,9 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			priv->sent_capend = TRUE;
 		}
 	}
-	else if (irc_str_equal (msg->words[1], "DEL"))
+	else if (irc_str_equal (irc_message_get_param(msg, 1), "DEL"))
 	{
-		g_auto(GStrv) caps = g_strsplit (msg->words_eol[2] + 1, " ", 0);
+		g_auto(GStrv) caps = g_strsplit (irc_message_get_param(msg, 2), " ", 0);
 
 		for (gsize i = 0; caps[i]; ++i)
 		{
@@ -912,12 +904,12 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			}
 		}
 	}
-	else if (irc_str_equal (msg->words[1], "LIST"))
+	else if (irc_str_equal (irc_message_get_param(msg, 1), "LIST"))
 	{
 		// Could clean up formatting
-		irc_context_print_with_time (IRC_CONTEXT(self), msg->words_eol[2], msg->timestamp);
+		irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_param(msg, 2), msg->timestamp);
 	}
-	else if (irc_str_equal (msg->words[1], "NAK"))
+	else if (irc_str_equal (irc_message_get_param(msg, 1), "NAK"))
 	{
 		// Don't realy have anything to do
 	}
@@ -927,10 +919,11 @@ static void
 inbound_005 (IrcServer *self, IrcMessage *msg)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	const gsize len = g_strv_length (msg->params);
 
-	for (uint i = 1; msg->words[i]; ++i)
+	for (gsize i = 1; i < len; ++i)
 	{
-		const char *word = msg->words[i];
+		const char *word = irc_message_get_param(msg, i);
 
 		if (*word == ':') // :are provided by this server
 			break;
@@ -972,7 +965,7 @@ inbound_005 (IrcServer *self, IrcMessage *msg)
 		// STATUSMSG
 	}
 
-	irc_context_print_with_time (IRC_CONTEXT(self), msg->words_eol[1], msg->timestamp);
+	irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_word_eol(msg, 1), msg->timestamp);
 }
 
 enum {
@@ -1007,7 +1000,7 @@ handle_incoming (IrcServer *self, const char *line)
 		switch (msg->numeric)
 		{
 		case 1: // RPL_WELCOME
-			irc_context_print_with_time (IRC_CONTEXT(self), msg->words_eol[1] + 1, msg->timestamp);
+			irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_param(msg, 1), msg->timestamp);
 			break;
 		case 5: // RPL_ISUPPORT
 			inbound_005 (self, msg);
@@ -1015,7 +1008,7 @@ handle_incoming (IrcServer *self, const char *line)
 		case 315: // RPL_ENDOFWHO
 			break;
 		case 332: // RPL_TOPIC
-			inbound_topic (self, msg->words[1], msg->words_eol[2] + 1);
+			inbound_topic (self, irc_message_get_param(msg, 1), irc_message_get_param(msg, 2));
 			break;
 		case 333: // RPL_TOPICWHO_TIME
 			break; // We don't care?
@@ -1030,7 +1023,7 @@ handle_incoming (IrcServer *self, const char *line)
 			break;
 		case 375: // RPL_MOTDSTART
 		case 372: // RPL_MOTD
-			irc_context_print_with_time (IRC_CONTEXT(self), msg->words_eol[1] + 1, msg->timestamp);
+			irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_param(msg, 1), msg->timestamp);
 			break;
 		case 376: // RPL_ENDOFMOTD
 			inbound_endofmotd (self);
@@ -1038,16 +1031,16 @@ handle_incoming (IrcServer *self, const char *line)
 		case 433: // ERR_NICKNAMEINUSE
 			{
 				// TODO: configurable
-				g_autofree char *new_nick = g_strconcat (msg->words[1], "_", NULL);
+				g_autofree char *new_nick = g_strconcat (irc_message_get_param(msg, 1), "_", NULL);
 				change_users_nick (self, priv->me, new_nick);
 				irc_server_write_linef (self, "NICK %s", priv->me->nick);
 			}
 			break;
 		case 730: // RPL_MONONLINE
-			inbound_user_online (self, msg->words_eol[1] + 1, TRUE);
+			inbound_user_online (self, irc_message_get_param(msg, 1), TRUE);
 			break;
 		case 731: // RPL_MONOFFLINE
-			inbound_user_online (self, msg->words_eol[1] + 1, FALSE);
+			inbound_user_online (self, irc_message_get_param(msg, 1), FALSE);
 			break;
 		case 903: // RPL_SASLSUCCESS
 		case 904: // RPL_SASLFAIL
@@ -1081,7 +1074,7 @@ handle_incoming (IrcServer *self, const char *line)
 			inbound_away (self, msg);
 			break;
 		case NOTICE:
-			irc_context_print_with_time (IRC_CONTEXT(self), strchr (msg->content, ':') + 1, msg->timestamp);
+			irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_param(msg, 1), msg->timestamp);
 			break;
 		case NICK:
 			inbound_nick (self, msg);
@@ -1093,7 +1086,7 @@ handle_incoming (IrcServer *self, const char *line)
 			irc_server_write_linef (self, "PONG %s", msg->content);
 			break;
 		case ERROR:
-			irc_context_print_with_time (IRC_CONTEXT(self), msg->words_eol[0] + 1, msg->timestamp);
+			irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_param(msg, 0), msg->timestamp);
 			break;
 		case CAP:
 			inbound_cap (self, msg);
@@ -1105,7 +1098,7 @@ handle_incoming (IrcServer *self, const char *line)
 			inbound_chghost (self, msg);
 			break;
 		case TOPIC:
-			inbound_topic (self, msg->words[0], msg->words_eol[1] + 1);
+			inbound_topic (self, irc_message_get_param(msg, 0), irc_message_get_param(msg, 1));
 			break;
 		case AUTHENTICATE:
 			inbound_authenticate (self, msg);

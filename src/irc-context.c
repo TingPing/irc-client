@@ -38,6 +38,50 @@ enum
 
 static guint signals[N_SIGNALS];
 
+static void
+create_words (const char *content, GStrv *words_in, GStrv *words_eol_in)
+{
+	char *p = (char*)content;
+	char *spaces[512];
+	char **word_eol;
+	char **word;
+	guint i;
+
+	// Get each space
+	for (i = 0; i < sizeof(spaces); ++i)
+	{
+		if (p != NULL)
+		{
+			spaces[i] = i ? ++p : p++;
+			p = strchr (p, ' ');
+		}
+		else
+			break;
+	}
+	spaces[i] = NULL;
+	const guint len = i + 1; // Including nul
+
+	// Allocate a pointer to these
+	word_eol = g_new (char*, len);
+	for (i = 0; spaces[i] != NULL; ++i)
+		word_eol[i] = spaces[i];
+	word_eol[i] = NULL;
+	*words_eol_in = word_eol;
+
+	// Split them up
+	word = g_new (char*, len);
+	for (i = 0; spaces[i] != NULL; ++i)
+	{
+		if (spaces[i + 1] != NULL)
+			word[i] = g_strndup (spaces[i], (guintptr)(spaces[i + 1] - spaces[i] - 1));
+		else
+			word[i] = g_strdup (spaces[i]); // Last word
+	}
+	word[i] = NULL;
+	*words_in = word;
+}
+
+
 void
 irc_context_remove_child (IrcContext *self, IrcContext *child)
 {
@@ -164,6 +208,7 @@ irc_context_run_command (IrcContext *self, const char *command)
   	g_auto(GStrv) words;
 	GStrv words_eol;
 
+	// TODO: Parse commands similar to hexchat handling quotes
 	create_words (command, &words, &words_eol);
 
 	g_signal_emit (self, signals[SIGNAL_COMMAND], g_quark_from_string (words[0]), words, words_eol, &handled);

@@ -37,8 +37,7 @@ typedef struct {
 	/*< public >*/
   	char *sender;
 	char *command;
-	GStrv words;
-	GStrv words_eol;
+	GStrv params;
 
   	/*< private >*/
 	char *content;
@@ -55,9 +54,11 @@ IrcMessage *irc_message_new (const char *line);
 IrcMessage *irc_message_copy (IrcMessage *msg);
 void irc_message_free (IrcMessage *msg);
 
+const char *irc_message_get_param (IrcMessage *msg, gsize i);
+const char *irc_message_get_word_eol (IrcMessage *msg, gsize i);
 GStrv irc_message_get_tags (IrcMessage *msg, guint *len);
 gboolean irc_message_has_tag (IrcMessage *msg, const char *tag);
-const char * irc_message_get_tag_value (IrcMessage *msg, const char *tag);
+const char *irc_message_get_tag_value (IrcMessage *msg, const char *tag);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(IrcMessage, irc_message_free)
 

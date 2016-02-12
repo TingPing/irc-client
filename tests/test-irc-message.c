@@ -29,16 +29,17 @@ test_message (void)
 	msg = irc_message_new (":nick!~ident@hostname QUIT :Read error: Connection reset by peer");
 
 	g_assert_nonnull (msg);
-	g_assert_nonnull (msg->words);
+	g_assert_nonnull (msg->params);
 	g_assert_cmpstr (msg->sender, ==, "nick!~ident@hostname");
 	g_assert_cmpstr (msg->command, ==, "QUIT");
 	g_assert_cmpint (msg->numeric, ==, 0);
-	g_assert_cmpstr (msg->content, ==, ":Read error: Connection reset by peer");
-	g_assert_cmpstr (msg->words_eol[0], ==, msg->content);
-	g_assert_cmpstr (msg->words_eol[5], ==, "peer");
-	g_assert_cmpstr (msg->words[0], ==, ":Read");
-	g_assert_cmpstr (msg->words[1], ==, "error:");
-  	g_assert_cmpstr (msg->words[5], ==, "peer");
+	g_assert_cmpstr (irc_message_get_param(msg, 0), ==, "Read error: Connection reset by peer");
+	g_assert_cmpstr (irc_message_get_param(msg, 1), ==, "");
+	g_assert_cmpstr (irc_message_get_word_eol (msg, 2), ==, "Connection reset by peer");
+	g_assert_cmpstr (irc_message_get_word_eol (msg, 100), ==, "");
+	g_assert_cmpstr (irc_message_get_word_eol (msg, 5), ==, "peer");
+	g_assert_cmpstr (irc_message_get_word_eol (msg, 6), ==, "");
+	g_assert_cmpstr (irc_message_get_word_eol (msg, 0), ==, ":Read error: Connection reset by peer");
 
 	irc_message_free (msg);
 
@@ -47,11 +48,13 @@ test_message (void)
 	g_assert_nonnull (msg);
 	g_assert_cmpstr (msg->sender, ==, "card.freenode.net");
 	g_assert_null (msg->command);
-	g_assert_nonnull (msg->words);
+	g_assert_nonnull (msg->params);
 	g_assert_cmpint (msg->numeric, ==, 318);
-	g_assert_cmpstr (msg->content, ==, "Nick Nick :End of /WHOIS list.");
-	g_assert_cmpstr (msg->words_eol[2], ==, ":End of /WHOIS list.");
-	g_assert_cmpstr (msg->words[0], ==, "Nick");
+	g_assert_cmpstr (irc_message_get_param(msg, 0), ==, "Nick");
+	g_assert_cmpstr (irc_message_get_param(msg, 1), ==, "Nick");
+	g_assert_cmpstr (irc_message_get_param(msg, 2), ==, "End of /WHOIS list.");
+	g_assert_cmpstr (irc_message_get_param(msg, 3), ==, "");
+
 
 	irc_message_free (msg);
 
@@ -61,9 +64,8 @@ test_message (void)
 	g_assert_null (msg->sender);
 	g_assert_cmpstr (msg->command, ==, "PING");
 	g_assert_cmpint (msg->numeric, ==, 0);
-	g_assert_cmpstr (msg->content, ==, ":card.freenode.net");
-	g_assert_nonnull (msg->words);
-	g_assert_cmpstr (msg->words[0], ==, ":card.freenode.net");
+	g_assert_cmpstr (irc_message_get_param(msg, 0), ==, "card.freenode.net");
+	g_assert_nonnull (msg->params);
 
   	irc_message_free (msg);
 
@@ -72,10 +74,8 @@ test_message (void)
 	g_assert_nonnull (msg);
 	g_assert_nonnull (msg->sender);
 	g_assert_cmpstr (msg->command, ==, "AWAY");
-	g_assert_nonnull (msg->words);
-	g_assert_null (msg->words[0]);
-	g_assert_nonnull (msg->words_eol);
-	g_assert_null (msg->words_eol[0]);
+	g_assert_nonnull (msg->params);
+	g_assert_cmpstr (irc_message_get_param(msg, 0), ==, "");
 
   	irc_message_free (msg);
 

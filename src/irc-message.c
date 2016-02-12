@@ -30,47 +30,52 @@
 
 G_DEFINE_BOXED_TYPE(IrcMessage, irc_message, irc_message_copy, irc_message_free)
 
-void
-create_words (const char *content, GStrv *words_in, GStrv *words_eol_in)
+/*
+ * Creates a new %GStrv with the contents of another array
+ */
+static inline GStrv
+new_strv (const GStrv array, const gsize len)
 {
-	char *p = (char*)content;
-	char *spaces[512];
-	char **word_eol;
-	char **word;
+	GStrv new = g_new (char*, len + 1);
+	for (gsize i = 0; i < len; ++i)
+		new[i] = array[i];
+	new[len] = NULL;
+	return new;
+}
+
+static GStrv
+parse_params (const char *content)
+{
+	char *param[256];
+	char *sp, *p = (char*)content;
 	guint i;
 
+	if (content == NULL)
+		return g_new0 (char*, 1);
+
+	sp = strchr (p, ' ');
 	// Get each space
-	for (i = 0; i < sizeof(spaces); ++i)
+	for (i = 0; i < sizeof(param); ++i)
 	{
-		if (p != NULL)
+		if (*p == ':')  // Trailing param
 		{
-			spaces[i] = i ? ++p : p++;
-			p = strchr (p, ' ');
+			param[i] = g_strdup (p + 1);
+			break;
+		}
+		else if (sp == NULL) // Last word
+		{
+			param[i] = g_strdup (p);
+			break;
 		}
 		else
-			break;
+		{
+			param[i] = g_strndup (p, (gsize)(sp - p));
+			p = sp + 1;
+			sp = strchr (p, ' '); // Next word
+		}
 	}
-	spaces[i] = NULL;
-	const guint len = i + 1; // Including nul
-
-	// Allocate a pointer to these
-	word_eol = g_new (char*, len);
-	for (i = 0; spaces[i] != NULL; ++i)
-		word_eol[i] = spaces[i];
-	word_eol[i] = NULL;
-	*words_eol_in = word_eol;
-
-	// Split them up
-	word = g_new (char*, len);
-	for (i = 0; spaces[i] != NULL; ++i)
-	{
-		if (spaces[i + 1] != NULL)
-			word[i] = g_strndup (spaces[i], (guintptr)(spaces[i + 1] - spaces[i] - 1));
-		else
-			word[i] = g_strdup (spaces[i]); // Last word
-	}
-	word[i] = NULL;
-	*words_in = word;
+	param[++i] = NULL;
+	return new_strv (param, i);
 }
 
 static inline time_t
@@ -237,7 +242,7 @@ irc_message_new (const char *line)
 	}
 
 	msg->content = g_strdup (p);
-	create_words (msg->content, &msg->words, &msg->words_eol);
+	msg->params = parse_params (p);
 
 	return msg;
 
@@ -262,8 +267,7 @@ irc_message_free (IrcMessage *msg)
 		g_free (msg->sender);
 		g_free (msg->command);
 		g_free (msg->content);
-		g_free (msg->words_eol);
-		g_strfreev (msg->words);
+		g_strfreev (msg->params);
 		g_free (msg);
 	}
 }
@@ -286,7 +290,7 @@ irc_message_copy (IrcMessage *msg)
 	copy->command = g_strdup (msg->command);
 	copy->numeric = msg->numeric;
 	copy->content = g_strdup (msg->content);
-	create_words (copy->content, &copy->words, &copy->words_eol);
+	copy->params = g_strdupv (msg->params);
 
 	return copy;
 }
@@ -328,4 +332,56 @@ const char *
 irc_message_get_tag_value (IrcMessage *msg, const char *tag)
 {
 	return g_hash_table_lookup (msg->tags, tag);
+}
+
+/**
+ * irc_message_get_param:
+ * @msg: Message to get parameter from
+ * @i: Index of parameter (from 0)
+ *
+ * Note that parameters are parsed according to RFC1459 which means
+ * a word starting with ':' will include all trailing words and the ':'
+ * is ignored
+ *
+ * Returns: parameter or empty string
+ */
+const char *
+irc_message_get_param (IrcMessage *msg, gsize i)
+{
+	if (i >= g_strv_length (msg->params))
+	{
+		g_debug ("Requested param beyond length");
+		return "";
+	}
+
+	return msg->params[i];
+}
+
+/**
+ * irc_message_get_word_eol:
+ * @msg: Message to get words from
+ * @i: Index of words (from 0)
+ *
+ * This is similar to irc_message_get_param() except it ignores
+ * the irc parsing rules and just gives you all words after @i
+ * number of words (delimiated by spaces).
+ *
+ * Returns: words or empty string
+ */
+const char *
+irc_message_get_word_eol (IrcMessage *msg, gsize i)
+{
+	char *p = msg->content;
+	while (i-- > 0)
+	{
+		p = strchr (p, ' ');
+		if (p == NULL)
+		{
+			g_debug ("Requested word_eol beyond length");
+			return "";
+		}
+		else
+			++p; // Skip space
+	}
+	return p;
 }

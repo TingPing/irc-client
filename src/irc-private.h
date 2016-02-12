@@ -20,5 +20,4 @@
 
 #include "irc-context.h"
 
-void create_words (const char *content, GStrv *words_in, GStrv *words_eol_in);
 gboolean handle_command (IrcContext *ctx, const GStrv, const GStrv);
