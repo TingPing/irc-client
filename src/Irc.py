@@ -28,8 +28,7 @@ class Message(Irc.Message):
 			'sender': self.sender,
 			'command': self.command,
 			'numeric': self.numeric,
-			'words': self.words,
-			'words_eol': self.words_eol,
+			'params': self.params,
 		})
 
 Message = override (Message)

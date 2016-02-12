@@ -12,4 +12,5 @@ src/irc-command.c
 src/irc-context.c
 src/irc-server.c
 src/irc-user.c
+src/irc-user-list-item.c
 

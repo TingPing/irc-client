@@ -731,8 +731,8 @@ inbound_away (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	g_object_set (user, "away", irc_message_get_param(msg, 0) != NULL,
-			   "away-reason", *irc_message_get_param(msg, 0) ? irc_message_get_param(msg, 0) : NULL, NULL);
+	g_object_set (user, "away", msg->params[0] != NULL,
+			   "away-reason", msg->params[0], NULL);
 }
 
 static void
@@ -827,22 +827,29 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 		for (gsize i = 0; caps[i]; ++i)
 		{
 			const char *cap = caps[i];
+			char *value = strchr (cap, '=');
+			if (value)
+			{
+				*value = '\0';
+				value++;
+			}
+
+			if (irc_str_equal (cap, "sasl"))
+			{
+				if (!wants_sasl)
+					continue;
+
+				// We only support PLAIN
+				if (value && !strstr (value, "PLAIN"))
+					continue;
+
+				g_strlcat (outbuf, "sasl ", sizeof (outbuf));
+				continue;
+			}
+
 			for (gsize y = 0; y < G_N_ELEMENTS(supported_caps); ++y)
 			{
-				if (g_str_has_prefix (cap, "sasl"))
-				{
-					if (!wants_sasl)
-						break;
-					char *p = strchr (cap, '=');
-					if (p != NULL)
-					{
-						// We only support PLAIN
-						if (!strstr (p, "PLAIN"))
-							break;
-					}
-					g_strlcat (outbuf, "sasl ", sizeof (outbuf));
-				}
-				else if (irc_str_equal (cap, supported_caps[y].name))
+				if (irc_str_equal (cap, supported_caps[y].name))
 				{
 					g_strlcat (outbuf, cap, sizeof (outbuf));
 					g_strlcat (outbuf, " ", sizeof (outbuf));
@@ -919,14 +926,11 @@ static void
 inbound_005 (IrcServer *self, IrcMessage *msg)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	const gsize len = g_strv_length (msg->params);
+	const gsize len = g_strv_length (msg->params) - 1; // Ends with :are supported by this server
 
 	for (gsize i = 1; i < len; ++i)
 	{
 		const char *word = irc_message_get_param(msg, i);
-
-		if (*word == ':') // :are provided by this server
-			break;
 
 		if (g_str_has_prefix (word, "PREFIX="))
 		{
