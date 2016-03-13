@@ -72,7 +72,7 @@ irc_user_list_get_users_prefix (IrcUserList *self, IrcUser *user)
 	IrcUserListPrivate *priv = irc_user_list_get_instance_private (self);
 	GSequenceIter *it = get_iter_by_user (priv->users, user);
 	if (it)
-		return g_sequence_get (it);
+		return IRC_USER_LIST_ITEM(g_sequence_get (it))->prefix;
 
 	return NULL;
 }
