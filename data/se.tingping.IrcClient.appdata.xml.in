@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<application>
-	<id type="desktop">se.tingping.IrcClient.desktop</id>
+<component type="desktop">
+	<id>se.tingping.IrcClient.desktop</id>
 	<licence>CC0</licence>
 	<description>
-		<_p>It's an irc client...</_p>
+		<p>It's an irc client...</p>
 	</description>
 	<url type="homepage">http://...</url>
 	<screenshots>
 		<screenshot type="default">...</screenshot>
 	</screenshots>
 	<updatecontact>tingping_at_fedoraproject.org</updatecontact>
-</application>
+</component>

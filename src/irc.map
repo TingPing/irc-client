@@ -1,0 +1,6 @@
+{
+global:
+    irc_*;
+local:
+    *;
+};

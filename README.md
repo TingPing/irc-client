@@ -16,15 +16,10 @@ everything yet. (Also yes win32 support will come eventually)
 
 ### Build-only deps
 
-- autoconf
-- automake
-- libtool
-- intltool
+- meson
 - gtk-doc
 - vala
 - python-gobject
-- appstream-glib
-- desktop-file-utils
 
 ### Runtime deps
 
@@ -35,7 +30,7 @@ everything yet. (Also yes win32 support will come eventually)
 - libpeas
 
 ```sh
-./autogen.sh
-make -s
-sudo make install
+meson build && cd build
+ninja
+sudo ninja install
 ```

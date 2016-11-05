@@ -1,0 +1,16 @@
+data/se.tingping.IrcClient.gschema.xml
+data/se.tingping.IrcClient.appdata.xml
+data/se.tingping.IrcClient.desktop
+data/gtk/menus.ui
+data/ui/networkproperties.ui
+data/ui/preferences.ui
+data/ui/window.ui
+src/gui/main.c
+src/gui/irc-userlist.c
+src/irc-channel.c
+src/irc-command.c
+src/irc-context.c
+src/irc-server.c
+src/irc-user.c
+src/irc-user-list-item.c
+
