@@ -141,7 +141,7 @@ libirc_dep = declare_dependency(
 libirc_gir = gnome.generate_gir(
   libirc,
   sources: libirc_sources + libirc_public_headers,
-  nsversion: '0.1',
+  nsversion: libirc_api_version,
   namespace: 'Irc',
   symbol_prefix: 'irc',
   identifier_prefix: 'Irc',
@@ -158,7 +158,7 @@ libirc_gir = gnome.generate_gir(
 
 if get_option('with-vapi')
 
-  gnome.generate_vapi('libirc-0.1',
+  gnome.generate_vapi('libirc-' + libirc_api_version,
     sources: libirc_gir[0],
     packages: [
       'gio-2.0',
