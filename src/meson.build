@@ -156,6 +156,20 @@ libirc_gir = gnome.generate_gir(
   ],
 )
 
+if get_option('with-vapi')
+
+  gnome.generate_vapi('libirc-0.1',
+    sources: libirc_gir[0],
+    packages: [
+      'gio-2.0',
+      'gtk+-3.0',
+      'libsexy3',
+    ],
+    install: true
+  )
+
+endif
+
 executable('irc-client',
   'gui/main.c',
   dependencies: libirc_dep,
