@@ -26,10 +26,49 @@
       "name": "irc-client",
       "buildsystem": "meson",
       "builddir": true,
+      "config-opts": [ "--libdir=lib" ],
       "sources": [{
         "type": "git",
         "url": "https://github.com/TingPing/irc-client.git"
-      }]
+      }],
+      "modules": [
+        {
+          "name": "meson",
+          "no-autogen": true,
+          "cleanup": [ "/bin", "/lib" ],
+          "sources": [
+            {
+              "type": "git",
+              "url": "https://github.com/mesonbuild/meson.git"
+            },
+            {
+              "type": "shell",
+              "commands": [ "echo 'all:\n\ninstall:\n\tpython3 ./setup.py install --prefix=/app' > Makefile" ]
+            }
+          ]
+        },
+        {
+          "name": "libpeas",
+          "config-opts": [ "--disable-gtk-doc", "--disable-gtk-doc-html", "--disable-python2" ],
+          "cleanup": [ "/bin", "/lib/peas-demo", "/include", "/lib/girepository-1.0",
+                       "*.la", "/lib/pkgconfig", "/share/gir-1.0", "/share/gtk-doc" ],
+          "sources": [{
+            "type": "archive",
+            "url": "https://download.gnome.org/sources/libpeas/1.20/libpeas-1.20.0.tar.xz",
+            "sha256": "f392fffe2dc00072a51bb2a1b274224a06bdc5f9c3b3c0ac4816909e9933d354"
+          }]
+        },
+        {
+          "name": "libsexy3",
+          "cleanup": [ "/include", "/lib/pkgconfig", "*.la", "/share" ],
+          "config-opts": [ "--disable-gtk-doc", "--disable-gtk-doc-html", "--disable-static" ],
+          "sources": [{
+            "type": "archive",
+            "url": "https://github.com/TingPing/libsexy3/releases/download/v1.1.0/libsexy3-1.1.0.tar.xz",
+            "sha256": "3cd2f377b9cdc55ebb238008b38cff37b7a0bef42ad400eb836c65fd1a40d625"
+          }]
+        }
+      ]
     }
   ]
 }
