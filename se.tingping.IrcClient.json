@@ -1,0 +1,35 @@
+{
+  "app-id": "se.tingping.IrcClient",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "3.22",
+  "sdk": "org.gnome.Sdk",
+  "command": "irc-client",
+  "finish-args": [
+      "--share=ipc",
+      "--socket=x11",
+      "--socket=wayland",
+      "--share=network",
+
+      "--talk-name=org.gtk.vfs",
+      "--talk-name=org.gtk.vfs.*",
+      "--talk-name=org.gnome.SettingsDaemon",
+
+      "--env=DCONF_USER_CONFIG_DIR=.config/dconf",
+      "--filesystem=xdg-run/dconf",
+      "--filesystem=~/.config/dconf:ro",
+      "--talk-name=ca.desrt.dconf",
+
+      "--env=SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+  ],
+  "modules": [
+    {
+      "name": "irc-client",
+      "buildsystem": "meson",
+      "builddir": true,
+      "sources": [{
+        "type": "git",
+        "url": "https://github.com/TingPing/irc-client.git"
+      }]
+    }
+  ]
+}
