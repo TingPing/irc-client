@@ -143,7 +143,7 @@ font_changed (GObject *obj, GParamSpec *spec, gpointer data)
   	IrcApplication *self = IRC_APPLICATION(data);
 	IrcApplicationPrivate *priv = irc_application_get_instance_private (self);
 	g_autofree char *font = g_settings_get_string (priv->settings, "font");
-	g_autofree char *css = g_strdup_printf (".irc-textview { font: %s }", font);
+	g_autofree char *css = g_strdup_printf (".irc-textview { font-family: %s }", font);
 
 	if (!gtk_css_provider_load_from_data (priv->css_provider, css, -1, NULL))
 		g_warning ("Failed loading font css \"%s\"", css);
