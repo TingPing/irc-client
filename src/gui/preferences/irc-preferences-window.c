@@ -236,6 +236,7 @@ static void
 irc_preferences_window_init (IrcPreferencesWindow *self)
 {
 	IrcPreferencesWindowPrivate *priv = irc_preferences_window_get_instance_private (self);
+	g_type_ensure (PEAS_GTK_TYPE_PLUGIN_MANAGER_VIEW);
 	gtk_widget_init_template (GTK_WIDGET (self));
 
 	g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.context", "/se/tingping/IrcClient/");
