@@ -126,7 +126,9 @@ removebutton_clicked_cb (GtkToolButton *btn, gpointer data)
 
   	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", network, "/", NULL);
 	g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
-	g_auto(GStrv) keys = g_settings_list_keys (settings);
+	g_autoptr(GSettingsSchema) schema;
+	g_object_get (settings, "settings-schema", &schema, NULL);
+	g_auto(GStrv) keys = g_settings_schema_list_keys (schema);
 	for (gsize i = 0; keys[i]; ++i)
 	{
 		g_settings_reset (settings, keys[i]);

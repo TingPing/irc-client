@@ -260,7 +260,7 @@ irc_context_view_button_press_event (GtkWidget *wid, GdkEventButton *event)
 		GMenuModel *menu = irc_context_get_menu (ctx);
 		GtkMenu *gtk_menu = GTK_MENU(gtk_menu_new_from_model (menu));
 		gtk_menu_attach_to_widget (gtk_menu, wid, NULL);
-		gtk_menu_popup (gtk_menu, NULL, NULL, NULL, NULL, event->button, event->time);
+		gtk_menu_popup_at_pointer (gtk_menu, (GdkEvent*)event);
 	}
 
 	gtk_tree_path_free (path);

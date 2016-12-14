@@ -9,15 +9,28 @@ project('irc-client', 'c',
 
 libirc_api_version = '0.1'
 
-libgio_dep = dependency('gio-2.0', version: '>= 2.44')
-libgtk_dep = dependency('gtk+-3.0', version: '>= 3.16')
+libgio_dep = dependency('gio-2.0', version: '>= 2.50')
+libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
 libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
 libnotify_dep = dependency('libnotify')
 libsexy_dep = dependency('libsexy3', version: '>= 1.1.0')
 
 config_h = configuration_data()
-config_h.set_quoted('PACKAGE_NAME', 'irc-client')
+config_h.set_quoted('PACKAGE_NAME', meson.project_name())
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
+config_h.set_quoted('GETTEXT_PACKAGE', meson.project_name())
+config_h.set10('ENABLE_NLS', true)
+config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'),
+                                 get_option('datadir'), 'locale'))
+config_h.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_50')
+config_h.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_50')
+if get_option('buildtype') == 'release'
+  config_h.set('G_DISABLE_ASSERT', true)
+  config_h.set('G_DISABLE_CHECKS', true)
+  config_h.set('G_DISABLE_CAST_CHECKS', true)
+else
+  config_h.set('G_ENABLE_DEBUG', true)
+endif
 configure_file(
   output: 'config.h',
   configuration: config_h,
@@ -32,6 +45,7 @@ test_cflags = [
   '-Winline',
   '-Wno-padded',
   '-Wno-unused-parameter',
+  '-Wno-nonnull-compare',
   '-Wstrict-prototypes',
   '-Wmissing-prototypes',
   '-Werror=implicit-function-declaration',
