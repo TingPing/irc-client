@@ -20,6 +20,7 @@
 #include "config.h"
 #endif
 
+#include <string.h>
 #include <libpeas/peas.h>
 
 #include "irc-application.h"
@@ -137,13 +138,38 @@ irc_application_focus_context (GSimpleAction *action, GVariant *param, gpointer 
 	g_action_group_activate_action (actions, "focus", param);
 }
 
+static char *
+css_from_pango_description (const char *description)
+{
+	g_autofree char *family = NULL;
+	guint64 size = 0;
+	char *p;
+
+	// TODO: Probably should handle weight also?
+	g_assert (description != NULL);
+	if ((p = strrchr (description, ' ')))
+	{
+		size = g_ascii_strtoull (p + 1, NULL, 0);
+		if (size)
+			family = g_strndup (description, (gsize)(p - description));
+	}
+	if (!family)
+		family = g_strdup (description);
+
+	if (size)
+		return g_strdup_printf (".irc-textview { font-family: %s; font-size: %"G_GUINT64_FORMAT "px }",
+								family, size);
+	else
+		return g_strdup_printf (".irc-textview { font-family: %s }", family);
+}
+
 static void
 font_changed (GObject *obj, GParamSpec *spec, gpointer data)
 {
   	IrcApplication *self = IRC_APPLICATION(data);
 	IrcApplicationPrivate *priv = irc_application_get_instance_private (self);
 	g_autofree char *font = g_settings_get_string (priv->settings, "font");
-	g_autofree char *css = g_strdup_printf (".irc-textview { font-family: %s }", font);
+	g_autofree char *css = css_from_pango_description (font);
 
 	if (!gtk_css_provider_load_from_data (priv->css_provider, css, -1, NULL))
 		g_warning ("Failed loading font css \"%s\"", css);
