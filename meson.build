@@ -9,12 +9,6 @@ project('irc-client', 'c',
 
 libirc_api_version = '0.1'
 
-libgio_dep = dependency('gio-2.0', version: '>= 2.50')
-libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
-libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
-libnotify_dep = dependency('libnotify')
-libsexy_dep = dependency('libsexy3', version: '>= 1.1.0')
-
 config_h = configuration_data()
 config_h.set_quoted('PACKAGE_NAME', meson.project_name())
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
@@ -28,7 +22,7 @@ if get_option('buildtype') == 'release'
   config_h.set('G_DISABLE_ASSERT', true)
   config_h.set('G_DISABLE_CHECKS', true)
   config_h.set('G_DISABLE_CAST_CHECKS', true)
-else
+elif get_option('buildtype').startswith('debug')
   config_h.set('G_ENABLE_DEBUG', true)
 endif
 configure_file(
@@ -83,6 +77,16 @@ add_project_link_arguments(global_ldflags, language: 'c')
 
 i18n = import('i18n')
 gnome = import('gnome')
+
+libgio_dep = dependency('gio-2.0', version: '>= 2.50')
+libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
+libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
+libnotify_dep = dependency('libnotify')
+libsexy_dep = dependency('libsexy3', version: '>= 1.1.0', required: false)
+if not libsexy_dep.found()
+  libsexy_project = subproject('libsexy3')
+  libsexy_dep = libsexy_project.get_variable('libsexy_dep')
+endif
 
 subdir('src')
 subdir('plugins')

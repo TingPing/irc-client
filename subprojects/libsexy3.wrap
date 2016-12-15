@@ -1,0 +1,4 @@
+[wrap-git]
+directory=libsexy3
+url=https://github.com/TingPing/libsexy3.git
+revision=wip/meson
