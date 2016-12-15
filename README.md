@@ -26,7 +26,7 @@ everything yet. (Also yes win32 support will come eventually)
 - gtk3
 - glib-networking
 - libnotify
-- [libsexy3](https://github.com/TingPing/libsexy3)
+- gspell
 - libpeas
 
 ```sh

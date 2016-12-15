@@ -66,7 +66,7 @@ libirc_deps = [
   libgtk_dep,
   libpeas_dep,
   libnotify_dep,
-  libsexy_dep,
+  libgspell_dep
 ]
 
 pkgincludedir = join_paths(get_option('includedir'), 'irc-client')
@@ -133,7 +133,7 @@ libirc = shared_library('irc',
 
 libirc_dep = declare_dependency(
   sources: libirc_gen_headers,
-  dependencies: [libgio_dep, libgtk_dep, libsexy_dep],
+  dependencies: [libgio_dep, libgtk_dep],
   link_with: libirc,
   include_directories: include_directories(libirc_includes),
 )
@@ -148,8 +148,7 @@ libirc_gir = gnome.generate_gir(
   install: true,
   includes: [
     'Gtk-3.0',
-    'Gio-2.0',
-    'Sexy-3.0',
+    'Gio-2.0'
   ],
   extra_args: [
     '--c-include=irc.h',
@@ -163,7 +162,6 @@ if get_option('with-vapi')
     packages: [
       'gio-2.0',
       'gtk+-3.0',
-      'libsexy3',
     ],
     install: true
   )

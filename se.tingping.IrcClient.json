@@ -59,13 +59,13 @@
           }]
         },
         {
-          "name": "libsexy3",
+          "name": "gspell",
           "cleanup": [ "/include", "/lib/pkgconfig", "*.la", "/share" ],
-          "config-opts": [ "--disable-gtk-doc", "--disable-gtk-doc-html", "--disable-static" ],
+          "config-opts": [ "--disable-gtk-doc", "--disable-gtk-doc-html" ],
           "sources": [{
             "type": "archive",
-            "url": "https://github.com/TingPing/libsexy3/releases/download/v1.1.0/libsexy3-1.1.0.tar.xz",
-            "sha256": "3cd2f377b9cdc55ebb238008b38cff37b7a0bef42ad400eb836c65fd1a40d625"
+            "url": "https://download.gnome.org/sources/gspell/1.3/gspell-1.3.1.tar.xz",
+            "sha256": "64771a3179e6fd76f6218703b2531c5392814cfe313951077c3aba2fc995cc7a"
           }]
         }
       ]

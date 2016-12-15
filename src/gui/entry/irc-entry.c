@@ -31,10 +31,10 @@ typedef struct
 
 struct _IrcEntry
 {
-	SexySpellEntry parent_instance;
+	GtkEntry parent_instance;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (IrcEntry, irc_entry, SEXY_TYPE_SPELL_ENTRY)
+G_DEFINE_TYPE_WITH_PRIVATE (IrcEntry, irc_entry, GTK_TYPE_ENTRY)
 
 static void
 irc_entry_push_into_history (GSimpleAction *action, GVariant *param, gpointer data)

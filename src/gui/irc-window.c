@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include <gspell/gspell.h>
+
 #include "irc-utils.h"
 #include "irc-user.h"
 #include "irc-userlist.h"
@@ -348,6 +350,8 @@ irc_window_init (IrcWindow *self)
 	gtk_widget_show_all (GTK_WIDGET(priv->sw_cv));
 
 	priv->entry = irc_entry_new ();
+	GspellEntry *spell_entry = gspell_entry_get_from_gtk_entry (GTK_ENTRY(priv->entry));
+	gspell_entry_basic_setup (spell_entry);
 	g_object_set (priv->entry, "margin", 5, NULL);
 	gtk_container_add (GTK_CONTAINER(priv->entry_frame), GTK_WIDGET(priv->entry));
 	gtk_widget_show (GTK_WIDGET(priv->entry));

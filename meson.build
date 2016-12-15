@@ -82,11 +82,7 @@ libgio_dep = dependency('gio-2.0', version: '>= 2.50')
 libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
 libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
 libnotify_dep = dependency('libnotify')
-libsexy_dep = dependency('libsexy3', version: '>= 1.1.0', required: false)
-if not libsexy_dep.found()
-  libsexy_project = subproject('libsexy3')
-  libsexy_dep = libsexy_project.get_variable('libsexy_dep')
-endif
+libgspell_dep = dependency('gspell-1', version: '>= 1.3.0')
 
 subdir('src')
 subdir('plugins')
