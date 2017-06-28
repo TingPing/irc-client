@@ -74,7 +74,7 @@ irc_user_list_item_set_property (GObject      *object,
 		self->prefix = g_value_dup_string (value);
 		break;
 	case PROP_USER:
-		self->user = g_value_get_object (value);
+		self->user = g_value_dup_object (value);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
