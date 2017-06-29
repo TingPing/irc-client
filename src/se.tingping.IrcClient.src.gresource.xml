@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/se/tingping/IrcClient/js">
+    <file compressed="true">main.js</file>
+    <file compressed="true">application.js</file>
+    <file compressed="true">applicationWindow.js</file>
+  </gresource>
+</gresources>

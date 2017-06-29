@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.22"/>
+  <template class="Gjs_NetworkList" parent="GtkBin">
+    <property name="visible">1</property>
+    <child class="GtkBox">
+      <property name="visible">1</property>
+      <child class="GtkListBox">
+        <property name="visible">1</property>
+      </child>
+    </child>
+  </template>
+</interface>

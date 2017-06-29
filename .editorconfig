@@ -3,15 +3,21 @@ root = true
 [*]
 end_of_line = lf
 charset = utf-8
-indent_style = tab
-indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+[*.{c,h}]
+indent_style = tab
+indent_size = 4
+
+[*.{js,js.in}]
+indent_style = space
+indent_size = 4
 
 [{meson.build,meson_options.txt}]
 indent_size = 2
 indent_style = space
 
-[*.{json,xml}]
+[*.{json,xml,ui}]
 indent_size = 2
 indent_style = space

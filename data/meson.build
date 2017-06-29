@@ -18,3 +18,12 @@ i18n.merge_file(
 install_data('se.tingping.IrcClient.gschema.xml',
   install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')
 )
+
+irc_data_resources = gnome.compile_resources(meson.project_name() + '.data',
+  'se.tingping.IrcClient.data.gresource.xml',
+  gresource_bundle: true,
+  install: true,
+  install_dir: pkgdatadir,
+)
+
+irc_settings = gnome.compile_schemas()

@@ -1,2 +1,1 @@
 option('with-docs', type: 'boolean', value: false)
-option('with-vapi', type: 'boolean', value: false)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<schemalist gettext-domain="irc-client">
+<schemalist gettext-domain="se.tingping.IrcClient">
 	<schema id="se.tingping.IrcClient" path="/se/tingping/IrcClient/">
 		<key name="window-pos" type="(ii)">
 			<summary>Last position of the main window</summary>

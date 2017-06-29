@@ -32,8 +32,3 @@ test_irc_utils = executable('test-irc-utils', 'test-irc-utils.c',
 test('Test Irc utils', test_irc_utils,
   env: test_env
 )
-
-executable('test-irc-textview', 'test-irc-textview.c',
-  dependencies: test_dependencies
-)
-

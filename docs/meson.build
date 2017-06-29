@@ -19,7 +19,6 @@ if get_option('with-docs')
       '--html-dir=' + docpath,
       '--extradir=' + join_paths(glib_docpath, 'glib'),
       '--extradir=' + join_paths(glib_docpath, 'gobject'),
-      '--extradir=' + join_paths(glib_docpath, 'gtk3'),
     ],
     install: true
   )

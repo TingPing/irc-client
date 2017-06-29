@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=IrcClient
+Name=IRC Client
 GenericName=IRC Client
 Comment=Chat with other people online
 Keywords=IM;Chat;
-Exec=irc-client %U
+Exec=se.tingping.IrcClient %U
 Terminal=false
 Type=Application
 Categories=GTK;Network;IRCClient;

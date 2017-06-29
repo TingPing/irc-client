@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/se/tingping/IrcClient">
+    <file compressed="true" preprocess="xml-stripblanks">gtk/menus.ui</file>
+
+    <file compressed="true" preprocess="xml-stripblanks">ui/ApplicationWindow.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/NetworkList.ui</file>
+  </gresource>
+</gresources>

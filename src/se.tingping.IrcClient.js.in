@@ -1,0 +1,8 @@
+#!/usr/bin/env gjs
+
+imports.package.start({
+    name: '@name@',
+    version: '@version@',
+    prefix: '@prefix@',
+    libdir: '@libdir@',
+});

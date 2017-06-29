@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.22"/>
+  <template class="Gjs_ApplicationWindow" parent="GtkApplicationWindow">
+    <property name="default-width">1200</property>
+    <property name="default-height">800</property>
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <property name="visible">1</property>
+        <property name="show-close-button">1</property>
+      </object>
+    </child>
+  </template>
+</interface>
