@@ -257,6 +257,11 @@ irc_context_manager_remove (IrcContextManager *self, IrcContext *ctx)
 	}
 }
 
+/**
+ * irc_context_manager_foreach_parent:
+ * @func: (scope call): Function to call foreach parent
+ * @data: (closure func): Data passed to the callbacks
+ */
 void
 irc_context_manager_foreach_parent (IrcContextManager *self, GNodeForeachFunc func, gpointer data)
 {
