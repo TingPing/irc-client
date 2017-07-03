@@ -355,7 +355,11 @@ irc_textview_button_press_event (GtkWidget *wid, GdkEventButton *event)
 			{
 				g_autofree char *url = get_tagged_word (link_tag, &iter);
 				if (url)
-					gtk_show_uri (NULL, url, event->time, NULL);
+				{
+					GtkWidget *win = gtk_widget_get_toplevel (wid);
+					gtk_show_uri_on_window (GTK_WINDOW(win), url, event->time, NULL);
+				}
+
 
 				return GDK_EVENT_STOP;
 			}
