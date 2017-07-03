@@ -199,6 +199,8 @@ irc_message_new (const char *line)
 		msg->timestamp = tags_get_time (msg);
 
 		p += len + 1;
+		if (G_LIKELY(*p == ' '))
+			p += 1;
 	}
 
 	if (*p == ':')

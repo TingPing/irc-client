@@ -89,6 +89,16 @@ test_message (void)
 	g_assert_false (irc_message_has_tag (msg, "junk"));
 
 	irc_message_free (msg);
+
+	msg = irc_message_new ("@time=2017-06-22T21:48:57.215Z :foo!bar@baz.com PRIVMSG Test :test string");
+
+	g_assert_cmpint (msg->timestamp, !=, 0);
+	g_assert_cmpstr (msg->sender, ==, "foo!bar@baz.com");
+	g_assert_cmpstr (msg->command, ==, "PRIVMSG");
+	g_assert_cmpstr (irc_message_get_param (msg, 0), ==, "Test");
+	g_assert_cmpstr (irc_message_get_param (msg, 1), ==, "test string");
+
+	irc_message_free (msg);
 }
 
 static void
