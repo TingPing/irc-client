@@ -18,10 +18,6 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <string.h>
 #include <glib/gstdio.h>
 #include "irc-message.h"

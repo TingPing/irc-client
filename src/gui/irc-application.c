@@ -16,10 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <string.h>
 #include <libpeas/peas.h>
 
@@ -94,8 +90,8 @@ irc_application_load_plugins (IrcApplication *self)
 	}
 	else
 	{
-		g_autofree char *plugin_path = g_build_filename (LIBDIR, "irc", NULL);
-		g_autofree char *user_plugin_path = g_build_filename (g_get_home_dir (), ".local", "lib", "irc", NULL);
+		g_autofree char *plugin_path = g_build_filename (LIBDIR, "irc-client", NULL);
+		g_autofree char *user_plugin_path = g_build_filename (g_get_home_dir (), ".local", "lib", "irc-client", NULL);
 
 		peas_engine_add_search_path (engine, user_plugin_path, NULL);
 		peas_engine_add_search_path (engine, plugin_path, NULL);

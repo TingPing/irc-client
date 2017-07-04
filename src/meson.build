@@ -1,3 +1,29 @@
+config_h = configuration_data()
+config_h.set_quoted('PACKAGE_NAME', meson.project_name())
+config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
+config_h.set_quoted('GETTEXT_PACKAGE', meson.project_name())
+config_h.set_quoted('G_LOG_DOMAIN', 'Irc')
+config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('localedir')))
+config_h.set_quoted('LIBDIR', join_paths(get_option('prefix'), get_option('libdir')))
+config_h.set10('ENABLE_NLS', true)
+config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'),
+                                 get_option('datadir'), 'locale'))
+config_h.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_50')
+config_h.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_50')
+config_h.set('GDK_VERSION_MIN_REQUIRED', 'GDK_VERSION_3_22')
+config_h.set('GDK_VERSION_MAX_ALLOWED', 'GDK_VERSION_3_22')
+if get_option('buildtype') == 'release'
+  config_h.set('G_DISABLE_ASSERT', true)
+  config_h.set('G_DISABLE_CHECKS', true)
+  config_h.set('G_DISABLE_CAST_CHECKS', true)
+elif get_option('buildtype').startswith('debug')
+  config_h.set('G_ENABLE_DEBUG', true)
+endif
+configure_file(
+  output: 'irc-config.h',
+  configuration: config_h,
+)
+
 libirc_sources = [
   'irc-context-action.c',
   'irc-context-manager.c',
@@ -105,9 +131,7 @@ libirc_gen_sources = [
 ]
 
 libirc_cflags = [
-  '-DG_LOG_DOMAIN="Irc"',
-  '-DLOCALEDIR="@0@"'.format(join_paths(get_option('prefix'), get_option('localedir'))),
-  '-DLIBDIR="@0@"'.format(join_paths(get_option('prefix'), get_option('libdir'))),
+  '-include', join_paths(meson.current_build_dir(), 'irc-config.h')
 ]
 
 libirc_link_flags = [
@@ -115,7 +139,7 @@ libirc_link_flags = [
 ]
 
 libirc_includes = [
-  '.', '..', 'gui',
+  '.', 'gui',
   'gui/textview', 'gui/contextview',
   'gui/entry', 'gui/preferences',
 ]
