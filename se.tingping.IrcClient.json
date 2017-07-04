@@ -13,6 +13,7 @@
       "--talk-name=org.gtk.vfs",
       "--talk-name=org.gtk.vfs.*",
       "--talk-name=org.gnome.SettingsDaemon",
+      "--talk-name=org.freedesktop.Notifications",
 
       "--env=DCONF_USER_CONFIG_DIR=.config/dconf",
       "--filesystem=xdg-run/dconf",
