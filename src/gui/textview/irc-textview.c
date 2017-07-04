@@ -88,8 +88,7 @@ G_STMT_END
 
 #define FORWARD_CHAR G_STMT_START \
 { \
-	if (G_UNLIKELY(!gtk_text_iter_forward_char (&cur_iter))) \
-		g_warning ("Failure to set next iter during attr parsing! " G_STRLOC); \
+	gtk_text_iter_forward_char (&cur_iter); \
 } \
 G_STMT_END
 
