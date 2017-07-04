@@ -57,8 +57,12 @@ command_me (IrcContext *ctx, const GStrv words, const GStrv words_eol)
 
 	irc_server_write_linef (serv, "PRIVMSG %s :\001ACTION %s\001", irc_context_get_name (ctx), words_eol[1]);
 
-	g_autofree char *formatted = g_strdup_printf ("* \002\00304%s\002\00314 %s", "TingPing", words_eol[1]);
-	irc_context_print (ctx, formatted);
+	IrcUser *me = irc_server_get_me (serv);
+	if (me)
+	{
+		g_autofree char *formatted = g_strdup_printf ("* \002\00304%s\002\00314 %s", me->nick, words_eol[1]);
+		irc_context_print (ctx, formatted);
+	}
 	return TRUE;
 }
 
