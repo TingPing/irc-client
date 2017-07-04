@@ -74,7 +74,8 @@ apply_irc_tags (GtkTextBuffer *buf, const char *text, int offset)
 	GtkTextIter bstart, istart, ustart, cur_iter, cstart;
 	const int line = gtk_text_buffer_get_line_count (buf);
 	gushort parsing_color = 0;
-	gtk_text_buffer_get_iter_at_line_offset (buf, &cur_iter, line, offset);
+	gtk_text_buffer_get_iter_at_line (buf, &cur_iter, line);
+	gtk_text_iter_set_line_offset (&cur_iter, offset);
 
 #define STOP_COLOR G_STMT_START \
 { \
