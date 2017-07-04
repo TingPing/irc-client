@@ -67,7 +67,7 @@ apply_color_tag (GtkTextBuffer *buf, const GtkTextIter *start, const GtkTextIter
 }
 
 static void
-apply_irc_tags (GtkTextBuffer *buf, const char *text, int offset)
+apply_irc_tags (GtkTextBuffer *buf, const char *text, const int offset)
 {
 	gboolean bold = FALSE, italic = FALSE, underline = FALSE;
 	char fgcol[3] = { 0 }, bgcol[3] = { 0 };
@@ -83,6 +83,20 @@ apply_irc_tags (GtkTextBuffer *buf, const char *text, int offset)
 } \
 G_STMT_END
 
+#define APPLY_COLOR G_STMT_START \
+{ \
+	if (*fgcol || *bgcol) \
+		apply_color_tag (buf, &cstart, &cur_iter, fgcol, bgcol); \
+} \
+G_STMT_END
+
+#define FORWARD_CHAR G_STMT_START \
+{ \
+	if (G_UNLIKELY(!gtk_text_iter_forward_char (&cur_iter))) \
+		g_warning ("Failure to set next iter during attr parsing! " G_STRLOC); \
+} \
+G_STMT_END
+
 	// NOTE: This must be exactly in sync with irc_strip_attributes();
 	for (char *p = (char*)text; *p ;p += g_utf8_skip[(guchar)*p])
 	{
@@ -90,19 +104,13 @@ G_STMT_END
 		{
 		case COLOR:
 			STOP_COLOR;
-			if (*fgcol || *bgcol)
-			{
-				apply_color_tag (buf, &cstart, &cur_iter, fgcol, bgcol);
-			}
+			APPLY_COLOR;
 			cstart = cur_iter;
 			parsing_color = 1;
 			continue;
 		case RESET:
 			STOP_COLOR;
-			if (*fgcol || *bgcol)
-			{
-				apply_color_tag (buf, &cstart, &cur_iter, fgcol, bgcol);
-			}
+			APPLY_COLOR;
 			if (bold)
 			{
 				gtk_text_buffer_apply_tag_by_name (buf, "bold", &bstart, &cur_iter);
@@ -156,7 +164,7 @@ G_STMT_END
 		default:
 			if (!parsing_color)
 			{
-				gtk_text_iter_forward_char (&cur_iter);
+				FORWARD_CHAR;
 				continue;
 			}
 
@@ -170,7 +178,7 @@ G_STMT_END
 				else if (parsing_color == 4) // We had a comma but never used it
 				{
 					parsing_color = 6;
-					gtk_text_iter_forward_char (&cur_iter);
+					FORWARD_CHAR;
 				}
 				else
 					parsing_color = 6;
@@ -200,8 +208,8 @@ G_STMT_END
 			}
 
 			g_assert (parsing_color == 6);
-			parsing_color = 0;
-			gtk_text_iter_forward_char (&cur_iter);
+			STOP_COLOR;
+			FORWARD_CHAR;
 		}
 	}
 
@@ -285,10 +293,6 @@ make_timestamp (time_t stamp, int *stamp_len_out)
 void
 irc_textview_append_text (IrcTextview *self, const char *text, time_t stamp)
 {
-	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(self));
-	GtkTextIter iter;
-	gtk_text_buffer_get_end_iter (buf, &iter);
-
 	// This is designed for one-line at a time
 	if (G_UNLIKELY(strchr (text, '\n') != NULL || strchr (text, '\r') != NULL))
 	{
@@ -300,6 +304,10 @@ irc_textview_append_text (IrcTextview *self, const char *text, time_t stamp)
 		}
 		return;
 	}
+
+	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(self));
+	GtkTextIter iter;
+	gtk_text_buffer_get_end_iter (buf, &iter);
 
 	if (G_LIKELY(!gtk_text_iter_is_start (&iter)))
 	{
@@ -356,6 +364,7 @@ irc_textview_button_press_event (GtkWidget *wid, GdkEventButton *event)
 			{
 				g_autofree char *url = get_tagged_word (link_tag, &iter);
 				if (url)
+
 				{
 					GtkWidget *win = gtk_widget_get_toplevel (wid);
 					gtk_show_uri_on_window (GTK_WINDOW(win), url, event->time, NULL);
