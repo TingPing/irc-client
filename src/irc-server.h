@@ -66,6 +66,7 @@ typedef enum
 } IrcServerCap;
 
 IrcServer *irc_server_new_from_network (const char *network_name) NON_NULL();
+IrcUser *irc_server_get_me (IrcServer *self);
 void irc_server_connect (IrcServer *self) NON_NULL();
 void irc_server_disconnect (IrcServer *self) NON_NULL();
 void irc_server_flushq (IrcServer *self) NON_NULL();

@@ -38,8 +38,13 @@ command_say (IrcContext *ctx, const GStrv words, const GStrv words_eol)
 
 	irc_server_write_linef (serv, "PRIVMSG %s :%s", irc_context_get_name (ctx), words_eol[1]);
 
-	g_autofree char *formatted = g_strdup_printf ("\00304%s\00314 %s", "TingPing", words_eol[1]); // TODO: Share event formatting
-	irc_context_print (ctx, formatted);
+	IrcUser *me = irc_server_get_me (serv);
+	if (me)
+	{
+		g_autofree char *formatted = g_strdup_printf ("\00304%s\00314 %s", me->nick, words_eol[1]); // TODO: Share event formatting
+		irc_context_print (ctx, formatted);
+	}
+
 	return TRUE;
 }
 

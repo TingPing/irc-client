@@ -1230,6 +1230,17 @@ process_sendq (gpointer data)
 	return G_SOURCE_REMOVE;
 }
 
+/**
+ * irc_server_get_me:
+ * Returns: (transfer none): Your user or %NULL
+ */
+IrcUser *
+irc_server_get_me (IrcServer *self)
+{
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	return priv->me;
+}
+
 void
 irc_server_write_line (IrcServer *self, const char *line)
 {
