@@ -1311,6 +1311,14 @@ on_readline_ready (GObject *source, GAsyncResult *res, gpointer data)
 }
 
 static void
+on_me_weak_ref(gpointer data, GObject *object)
+{
+	IrcServer *self = IRC_SERVER(data);
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	priv->me = NULL;
+}
+
+static void
 connect_ready(GObject *source, GAsyncResult *res, gpointer data)
 {
 	GError *err = NULL;
@@ -1351,7 +1359,8 @@ connect_ready(GObject *source, GAsyncResult *res, gpointer data)
 	g_autofree char *password = g_settings_get_string (settings, "server-password");
 	priv->me = irc_user_new (nick);
 	g_object_set (priv->me, "realname", realname, "username", username, NULL); // FIXME: Username might be wrong
-	g_hash_table_replace (priv->usertable, priv->me->nick, priv->me);
+	g_object_weak_ref (G_OBJECT(priv->me), on_me_weak_ref, self);
+	usertable_insert (self, priv->me);
 
 	if (*password)
 		irc_server_write_linef (self, "PASS %s\r\nCAP LS 302\r\nNICK %s\r\nUSER %s * * :%s",
@@ -1420,6 +1429,8 @@ irc_server_disconnect (IrcServer *self)
   	g_hash_table_foreach (priv->querytable, foreach_query_set_offline, NULL);
 	//g_hash_table_remove_all (priv->usertable); // Chan/Query references users
 	g_clear_object (&priv->me);
+
+	g_assert (g_hash_table_size (priv->usertable) == 0); // Nothing should be left
 
 	// Reset CAP state
 	priv->sent_capend = FALSE;
