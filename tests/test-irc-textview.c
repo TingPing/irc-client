@@ -31,6 +31,9 @@ on_delete (GtkWidget *wid, GdkEvent *event, gpointer data)
 static const char *color_lines[] = {
 	"\003no color",
 	"\00304red",
+	"\00304red to \00399none",
+	"\003,04redbg to \00399none",
+	"\003,04redbg to \003,99none",
 	"\00304,04red on red",
 	"\003,04none on red",
 	"\003,none",
