@@ -1155,7 +1155,11 @@ process_sendq (gpointer data)
 
 	g_autofree char *out_buf = g_queue_pop_head (priv->sendq);
 	g_print ("\033[31m<<\033[0m %s", out_buf);
-	g_autofree char *out_encoded = irc_convert_invalid_text (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
+	g_autofree char *out_encoded;
+	if (g_ascii_strcasecmp (priv->encoding, "UTF-8") == 0)
+		out_encoded = g_utf8_make_valid (out_buf, (gssize)strlen(out_buf));
+	else
+		out_encoded = irc_convert_invalid_text (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
 	g_output_stream_write_async (out_stream, out_encoded, strlen(out_encoded), G_PRIORITY_DEFAULT, NULL,
 								on_writeline_ready, self);
 
@@ -1202,7 +1206,11 @@ irc_server_write_line (IrcServer *self, const char *line)
 	else
 	{
 		g_print ("\033[31m<<\033[0m %s", out_buf);
-		g_autofree char *out_encoded = irc_convert_invalid_text (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
+		g_autofree char *out_encoded;
+		if (g_ascii_strcasecmp (priv->encoding, "UTF-8") == 0)
+			out_encoded = g_utf8_make_valid (out_buf, (gssize)strlen(out_buf));
+		else
+			out_encoded = irc_convert_invalid_text (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
 		g_output_stream_write_async (out_stream, out_encoded, strlen(out_encoded), G_PRIORITY_DEFAULT, NULL,
 									on_writeline_ready, self);
 		g_free (out_buf);
@@ -1236,7 +1244,11 @@ on_readline_ready (GObject *source, GAsyncResult *res, gpointer data)
 	IrcServerPrivate *priv = irc_server_get_instance_private (server);
 
 	g_assert (len <= G_MAXSSIZE);
-	g_autofree char *utf8_input = irc_convert_invalid_text (input, (gssize)len, priv->in_decoder, "�");
+	g_autofree char *utf8_input;
+	if (g_ascii_strcasecmp (priv->encoding, "UTF-8") == 0)
+		utf8_input = g_utf8_make_valid (input, (gssize)len);
+	else
+		utf8_input = irc_convert_invalid_text (input, (gssize)len, priv->in_decoder, "�");
 	g_print ("\033[32m>>\033[0m %s\n", utf8_input);
 	gboolean handled;
 	g_signal_emit (server, obj_signals[INBOUND], 0, utf8_input, &handled);
@@ -1646,11 +1658,16 @@ irc_server_set_property (GObject      *object,
 			g_free (priv->encoding);
 			g_iconv_close (priv->in_decoder);
 			g_iconv_close (priv->out_encoder);
+			priv->in_decoder = NULL;
+			priv->out_encoder = NULL;
 		}
 		priv->encoding = g_value_dup_string (value);
-		// TODO: Ensure valid encoding
-		priv->in_decoder = g_iconv_open ("UTF-8", priv->encoding);
-		priv->out_encoder = g_iconv_open (priv->encoding, "UTF-8");
+		if (g_ascii_strcasecmp (priv->encoding, "UTF-8") != 0)
+		{
+			// TODO: Ensure valid encoding
+			priv->in_decoder = g_iconv_open ("UTF-8", priv->encoding);
+			priv->out_encoder = g_iconv_open (priv->encoding, "UTF-8");
+		}
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

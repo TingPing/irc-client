@@ -8,8 +8,8 @@ config_h.set_quoted('LIBDIR', join_paths(get_option('prefix'), get_option('libdi
 config_h.set10('ENABLE_NLS', true)
 config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'),
                                  get_option('datadir'), 'locale'))
-config_h.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_50')
-config_h.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_50')
+config_h.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_52')
+config_h.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_52')
 config_h.set('GDK_VERSION_MIN_REQUIRED', 'GDK_VERSION_3_22')
 config_h.set('GDK_VERSION_MAX_ALLOWED', 'GDK_VERSION_3_22')
 if get_option('buildtype') == 'release'
