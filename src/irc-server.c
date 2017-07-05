@@ -96,7 +96,7 @@ on_user_unref (gpointer data, GObject *obj, gboolean is_last_ref)
 	}
 }
 
-static inline void
+static void
 usertable_insert (IrcServer *self, IrcUser *user)
 {
   	IrcServerPrivate *priv = irc_server_get_instance_private (self);
@@ -231,15 +231,10 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 		if (user == NULL)
 		{
 			if (is_you)
-			{
 				user = irc_user_new (ctx_nick);
-				usertable_insert (self, user);
-			}
 			else
-			{
 				user = irc_user_new (msg->sender);
-				usertable_insert (self, user);
-			}
+			usertable_insert (self, user);
 		}
 		dest_ctx = g_hash_table_lookup (priv->querytable, ctx_nick);
 		if (dest_ctx == NULL)
