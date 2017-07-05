@@ -20,6 +20,7 @@
 
 
 #include <glib.h>
+#include <gio/gio.h>
 #include "irc-utils.h"
 
 static void
@@ -100,6 +101,26 @@ test_strv (void)
 	g_strfreev (new);
 }
 
+static void
+test_converter (void)
+{
+	const char *test_file = g_test_get_filename (G_TEST_DIST, "converter-data.txt", NULL);
+	g_autoptr(GFile) file = g_file_new_for_path (test_file);
+	GIConv converter = g_iconv_open ("UTF-8", "UTF-8");
+	gsize length;
+	g_autofree char *contents = NULL;
+
+	g_assert_true (g_file_load_contents (file, NULL, &contents, &length, NULL, NULL));
+	//g_autofree char *utf8_text = g_utf8_make_valid (contents, (gssize)length);
+	//g_autofree char *utf8_text = g_convert_with_fallback (contents, (gssize)length, "UTF-8", "UTF-8", "�", NULL, NULL, &err);
+	g_autofree char *utf8_text = irc_convert_invalid_text (contents, (gssize)length, converter, "�");
+
+	g_assert_nonnull (utf8_text);
+	g_assert_true (g_utf8_validate (utf8_text, -1, NULL));
+
+	g_iconv_close (converter);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -110,6 +131,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/irc/utils/strstr", test_strstr);
 	g_test_add_func ("/irc/utils/hash", test_hash);
 	g_test_add_func ("/irc/utils/strv", test_strv);
+	g_test_add_func ("/irc/utils/converter", test_converter);
 
 	return g_test_run ();
 }

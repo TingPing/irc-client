@@ -294,3 +294,89 @@ irc_strv_append (GStrv array, const char *str)
 	new_array[len + 1] = NULL;
 	return new_array;
 }
+
+/**
+ * irc_convert_invalid_text: (skip)
+ * @text: Input bytes
+ * @len: Length of @text in bytes
+ * @fallback_char: Sequence to replace invalid characters with (must be valid for encoding!)
+ *
+ * Converts a given string using the given iconv converter. This is similar to g_convert_with_fallback,
+ * except that it is tolerant of sequences in the original input that are invalid even in from_encoding.
+ * g_convert_with_fallback fails for such text, whereas this function replaces such a sequence with the
+ * fallback string.
+ *
+ * Returns: Newly allocated string valid in encoding of @converter
+ */
+char *
+irc_convert_invalid_text (const char *text, gssize len, GIConv converter, const char *fallback_char)
+{
+	gchar *result_part;
+	gsize result_part_len;
+	const gchar *end = text + len;
+	gsize invalid_start_pos;
+	GString *result;
+	const gchar *current_start;
+
+	g_assert (len >= 0);
+
+	// Find the first position of an invalid sequence.
+	result_part = g_convert_with_iconv (text, len, converter, &invalid_start_pos, &result_part_len, NULL);
+	g_iconv (converter, NULL, NULL, NULL, NULL);
+
+	if (result_part != NULL)
+	{
+		// All text converted successfully on the first try. Return it.
+		return result_part;
+	}
+
+	// One or more invalid sequences exist that need to be replaced with the fallback.
+	result = g_string_sized_new ((gsize)len);
+	current_start = text;
+
+	for (;;)
+	{
+		g_assert (current_start + invalid_start_pos < end);
+		g_assert (invalid_start_pos <= G_MAXSSIZE);
+
+		/* Convert everything before the position of the invalid sequence. It should be successful.
+		 * But iconv may not convert everything till invalid_start_pos since the last few bytes may be part of a shift sequence.
+		 * So get the new bytes_read and use it as the actual invalid_start_pos to handle this.
+		 *
+		 * See https://github.com/hexchat/hexchat/issues/1758
+		 */
+		result_part = g_convert_with_iconv (current_start, (gssize)invalid_start_pos, converter, &invalid_start_pos, &result_part_len, NULL);
+		g_iconv (converter, NULL, NULL, NULL, NULL);
+
+		g_assert (result_part != NULL);
+		g_assert (result_part_len <= G_MAXSSIZE);
+		g_string_append_len (result, result_part, (gssize)result_part_len);
+		g_free (result_part);
+
+		// Append the fallback.
+		g_string_append (result, fallback_char);
+
+		// Now try converting everything after the invalid sequence.
+		current_start += invalid_start_pos + 1;
+
+		result_part = g_convert_with_iconv (current_start, end - current_start, converter, &invalid_start_pos, &result_part_len, NULL);
+		g_iconv (converter, NULL, NULL, NULL, NULL);
+
+		if (result_part != NULL)
+		{
+			// The rest of the text converted successfully. Append it and return the whole converted text.
+
+			g_assert (result_part_len <= G_MAXSSIZE);
+			g_string_append_len (result, result_part, (gssize)result_part_len);
+			g_free (result_part);
+
+			return g_string_free (result, FALSE);
+		}
+
+		// The rest of the text didn't convert successfully. invalid_start_pos has the position of the next invalid sequence.
+	}
+
+	g_assert_not_reached ();
+}
+
+

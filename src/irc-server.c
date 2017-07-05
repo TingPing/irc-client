@@ -1116,72 +1116,6 @@ handle_incoming (IrcServer *self, const char *line)
 	return TRUE;
 }
 
-/*
- * Converts a given string using the given iconv converter. This is similar to g_convert_with_fallback,
- * except that it is tolerant of sequences in the original input that are invalid even in from_encoding.
- * g_convert_with_fallback fails for such text, whereas this function replaces such a sequence with the
- * fallback string.
- */
-static char *
-text_convert_invalid (const char *text, gssize len, GIConv converter, const char *fallback_char)
-{
-	gchar *result_part;
-	gsize result_part_len;
-	const gchar *end = text + len;
-	gsize invalid_start_pos;
-	GString *result;
-	const gchar *current_start;
-
-	g_assert (len >= 0);
-
-	// Find the first position of an invalid sequence.
-	result_part = g_convert_with_iconv (text, len, converter, &invalid_start_pos, &result_part_len, NULL);
-	if (result_part != NULL)
-	{
-		// All text converted successfully on the first try. Return it.
-		return result_part;
-	}
-
-	// One or more invalid sequences exist that need to be replaced with the fallback.
-	result = g_string_sized_new ((gsize)len);
-	current_start = text;
-
-	for (;;)
-	{
-		g_assert (current_start + invalid_start_pos < end);
-		g_assert (invalid_start_pos <= G_MAXSSIZE);
-
-		// Convert everything before the position of the invalid sequence. It should be successful.
-		result_part = g_convert_with_iconv (current_start, (gssize)invalid_start_pos, converter, &invalid_start_pos, &result_part_len, NULL);
-		g_assert (result_part != NULL);
-		g_assert (result_part_len <= G_MAXSSIZE);
-		g_string_append_len (result, result_part, (gssize)result_part_len);
-		g_free (result_part);
-
-		// Append the fallback.
-		g_string_append (result, fallback_char);
-
-		// Now try converting everything after the invalid sequence.
-		current_start += invalid_start_pos + 1;
-
-		result_part = g_convert_with_iconv (current_start, end - current_start, converter, &invalid_start_pos, &result_part_len, NULL);
-		if (result_part != NULL)
-		{
-			// The rest of the text converted successfully. Append it and return the whole converted text.
-
-			g_assert (result_part_len <= G_MAXSSIZE);
-			g_string_append_len (result, result_part, (gssize)result_part_len);
-			g_free (result_part);
-
-			return g_string_free (result, FALSE);
-		}
-
-		// The rest of the text didn't convert successfully. invalid_start_pos has the position of the next invalid sequence.
-	}
-
-	g_assert_not_reached ();
-}
-
 void
 irc_server_write_linef (IrcServer *self, const char *fmt, ...)
 {
@@ -1221,7 +1155,7 @@ process_sendq (gpointer data)
 
 	g_autofree char *out_buf = g_queue_pop_head (priv->sendq);
 	g_print ("\033[31m<<\033[0m %s", out_buf);
-	g_autofree char *out_encoded = text_convert_invalid (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
+	g_autofree char *out_encoded = irc_convert_invalid_text (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
 	g_output_stream_write_async (out_stream, out_encoded, strlen(out_encoded), G_PRIORITY_DEFAULT, NULL,
 								on_writeline_ready, self);
 
@@ -1268,7 +1202,7 @@ irc_server_write_line (IrcServer *self, const char *line)
 	else
 	{
 		g_print ("\033[31m<<\033[0m %s", out_buf);
-		g_autofree char *out_encoded = text_convert_invalid (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
+		g_autofree char *out_encoded = irc_convert_invalid_text (out_buf, (gssize)strlen(out_buf), priv->out_encoder, "?");
 		g_output_stream_write_async (out_stream, out_encoded, strlen(out_encoded), G_PRIORITY_DEFAULT, NULL,
 									on_writeline_ready, self);
 		g_free (out_buf);
@@ -1302,8 +1236,7 @@ on_readline_ready (GObject *source, GAsyncResult *res, gpointer data)
 	IrcServerPrivate *priv = irc_server_get_instance_private (server);
 
 	g_assert (len <= G_MAXSSIZE);
-	g_autofree char *utf8_input = text_convert_invalid (input, (gssize)len, priv->in_decoder, "�");
-
+	g_autofree char *utf8_input = irc_convert_invalid_text (input, (gssize)len, priv->in_decoder, "�");
 	g_print ("\033[32m>>\033[0m %s\n", utf8_input);
 	gboolean handled;
 	g_signal_emit (server, obj_signals[INBOUND], 0, utf8_input, &handled);
