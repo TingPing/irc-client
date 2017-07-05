@@ -230,9 +230,16 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 		g_autoptr(IrcUser) user = usertable_lookup (self, ctx_nick);
 		if (user == NULL)
 		{
-			g_assert (is_you == FALSE);
-			user = irc_user_new (msg->sender);
-			usertable_insert (self, user);
+			if (is_you)
+			{
+				user = irc_user_new (ctx_nick);
+				usertable_insert (self, user);
+			}
+			else
+			{
+				user = irc_user_new (msg->sender);
+				usertable_insert (self, user);
+			}
 		}
 		dest_ctx = g_hash_table_lookup (priv->querytable, ctx_nick);
 		if (dest_ctx == NULL)
