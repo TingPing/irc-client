@@ -43,6 +43,7 @@ G_DECLARE_DERIVABLE_TYPE (IrcServer, irc_server, IRC, SERVER, GObject)
  * @IRC_SERVER_SUPPORT_MONITOR: MONITOR in ISUPPORT
  * @IRC_SERVER_CAP_TWITCH_MEMBERSHIP: twitch.tv/membership
  * @IRC_SERVER_CAP_CAP_NOTIFY: cap-notify
+ * @IRC_SERVER_CAP_TWITCH_TAGS: twitch.tv/tags
  *
  * See http://ircv3.net/ for more information.
  *
@@ -63,6 +64,7 @@ typedef enum
 	IRC_SERVER_SUPPORT_MONITOR = 1 << 11,
 	IRC_SERVER_CAP_TWITCH_MEMBERSHIP = 1 << 12,
 	IRC_SERVER_CAP_CAP_NOTIFY = 1 << 13,
+	IRC_SERVER_CAP_TWITCH_TAGS = 1 << 14,
 } IrcServerCap;
 
 IrcServer *irc_server_new_from_network (const char *network_name) NON_NULL();

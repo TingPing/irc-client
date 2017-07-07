@@ -265,6 +265,18 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 
 	g_autofree char *formatted;
 	g_autofree char *nick = nick_from_host (msg->sender);
+
+	if (priv->caps & IRC_SERVER_CAP_TWITCH_TAGS)
+	{
+		const char *display_name = irc_message_get_tag_value (msg, "display-name");
+		// It might be safe to support display-name != irc nick but not for now
+		if (display_name != NULL && irc_str_equal (nick, display_name))
+		{
+			g_free (nick);
+			nick = g_strdup (display_name);
+		}
+	}
+
 	if (!is_you && irc_strcasestr (irc_message_get_param(msg, 1), priv->me->nick) != NULL)
 		is_highlight = TRUE;
 
@@ -799,6 +811,7 @@ const struct SupportedCap supported_caps[] =
 	{ "znc.in/server-time-iso", IRC_SERVER_CAP_SERVER_TIME },
 	{ "znc.in/self-message", IRC_SERVER_CAP_ZNC_SELF_MESSAGE },
 	{ "twitch.tv/membership", IRC_SERVER_CAP_TWITCH_MEMBERSHIP },
+	{ "twitch.tv/tags", IRC_SERVER_CAP_TWITCH_TAGS },
 };
 
 static void
