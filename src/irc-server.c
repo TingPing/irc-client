@@ -309,7 +309,13 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 			{
 				show_notification (dest_ctx, "Private Message", stripped);
 			}
-			formatted = g_strdup_printf ("\00302%s\00399 %s", nick, text);
+			const char *user_color = NULL;
+			if (priv->caps & IRC_SERVER_CAP_TWITCH_TAGS)
+				user_color = irc_message_get_tag_value (msg, "color");
+			if (user_color && *user_color)
+				formatted = g_strdup_printf ("\004%s%s\00399 %s", user_color + 1, nick, text);
+			else
+				formatted = g_strdup_printf ("\00302%s\00399 %s", nick, text);
 		}
 	}
 	else
