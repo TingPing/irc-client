@@ -27,6 +27,7 @@ typedef struct
 {
 	IrcUser *user;
 	IrcContext *parent;
+	char *name;
 	gboolean online;
 } IrcQueryPrivate;
 
@@ -41,6 +42,8 @@ irc_query_set_online (IrcQuery *self, gboolean online)
 {
 	IrcQueryPrivate *priv = irc_query_get_instance_private (self);
 	priv->online = online;
+	if (!online)
+		g_clear_object (&priv->user);
 	g_object_notify (G_OBJECT(self), "active");
 }
 
@@ -52,7 +55,7 @@ irc_query_set_online (IrcQuery *self, gboolean online)
 IrcQuery *
 irc_query_new (IrcContext *parent, IrcUser *user)
 {
-	return g_object_new (IRC_TYPE_QUERY, "user", user, "parent", parent, NULL);
+	return g_object_new (IRC_TYPE_QUERY, "user", user, "parent", parent, "name", user->nick, NULL);
 }
 
 static void
@@ -62,6 +65,7 @@ irc_query_finalize (GObject *object)
 	IrcQueryPrivate *priv = irc_query_get_instance_private (self);
 
 	g_clear_object (&priv->user);
+	g_clear_pointer (&priv->name, g_free);
 
 	G_OBJECT_CLASS (irc_query_parent_class)->finalize (object);
 }
@@ -91,7 +95,7 @@ irc_query_get_property (GObject *obj, guint prop_id, GValue *val, GParamSpec *ps
 		g_value_set_object (val, priv->parent);
 		break;
 	case PROP_NAME:
-		g_value_set_string (val, priv->user->nick);
+		g_value_set_string (val, priv->name);
 		break;
 	case PROP_ONLINE:
 		g_value_set_boolean (val, priv->online);
@@ -111,12 +115,15 @@ irc_query_set_property (GObject *obj, guint prop_id, const GValue *val, GParamSp
 	switch (prop_id)
 	{
 	case PROP_USER:
+		g_clear_object (&priv->user);
 		priv->user = g_value_dup_object (val);
 		break;
 	case PROP_PARENT:
 		priv->parent = g_value_get_object (val);
 		break;
 	case PROP_NAME:
+		g_free (priv->name);
+		priv->name = g_value_dup_string (val);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, prop_id, pspec);
@@ -137,7 +144,7 @@ irc_query_iface_get_name (IrcContext *ctx)
 {
 	IrcQuery *self = IRC_QUERY (ctx);
   	IrcQueryPrivate *priv = irc_query_get_instance_private (self);
-	return priv->user->nick;
+	return priv->name;
 }
 
 static void
@@ -154,7 +161,7 @@ irc_query_class_init (IrcQueryClass *klass)
 	g_object_class_override_property (object_class, PROP_ONLINE, "active");
 	g_object_class_install_property (object_class, PROP_USER,
 									g_param_spec_object ( "user", "User", "User of Query",
-											IRC_TYPE_USER, G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY));
+											IRC_TYPE_USER, G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
 }
 
 static void

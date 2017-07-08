@@ -133,7 +133,7 @@ irc_user_list_add (IrcUserList *self, IrcUser *user, const char *prefix)
 	IrcUserListPrivate *priv = irc_user_list_get_instance_private (self);
 	IrcUserListItem *item = irc_user_list_item_new (user, prefix);
 
-	GSequenceIter *it = g_sequence_insert_sorted (priv->users, g_object_ref (item),
+	GSequenceIter *it = g_sequence_insert_sorted (priv->users, item,
                                     (GCompareDataFunc)irc_user_compare_func, NULL);
 	g_assert (it != NULL);
 	guint position = (guint)g_sequence_iter_get_position (it);
@@ -147,13 +147,12 @@ irc_user_list_clear (IrcUserList *self)
 {
 	IrcUserListPrivate *priv = irc_user_list_get_instance_private (self);
 	GSequenceIter *begin, *end;
-
-	begin = g_sequence_get_begin_iter (priv->users);
-	end = g_sequence_get_end_iter (priv->users);
-	if (g_sequence_iter_compare (begin, end))
+	if (g_sequence_is_empty (priv->users))
 		return;
 
 	guint len = (guint)g_sequence_get_length(priv->users);
+	begin = g_sequence_get_begin_iter (priv->users);
+	end = g_sequence_get_end_iter (priv->users);
 	g_sequence_remove_range (begin, end);
 
 	irc_user_list_items_changed (self, 0, len, 0);

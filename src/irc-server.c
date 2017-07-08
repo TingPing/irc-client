@@ -359,17 +359,15 @@ inbound_part (IrcServer *self, IrcMessage *msg)
 	}
 
 	g_autofree char *nick = nick_from_host (msg->sender);
-
-	if (irc_str_equal (nick, priv->me->nick))
-	{
-		irc_channel_set_joined (channel, FALSE);
-		return;
-	}
-
 	g_autoptr(IrcUser) user = usertable_lookup (self, nick);
 	if (user == NULL)
 	{
 		g_warning ("Got PART for uknown user");
+		return;
+	}
+	else if (user == priv->me)
+	{
+		irc_channel_set_joined (channel, FALSE);
 		return;
 	}
 
@@ -523,7 +521,7 @@ inbound_names (IrcServer *self, IrcMessage *msg)
 		while (strchr (priv->nick_prefixes, nick[offset]) != NULL)
 			++offset;
 
-		IrcUser *user = usertable_lookup (self, nick + offset);
+		g_autoptr(IrcUser) user = usertable_lookup (self, nick + offset);
 		if (user == NULL)
 		{
 			user = irc_user_new (names[i] + offset); // Want full-host here
@@ -1277,14 +1275,6 @@ on_readline_ready (GObject *source, GAsyncResult *res, gpointer data)
 }
 
 static void
-on_me_weak_ref(gpointer data, GObject *object)
-{
-	IrcServer *self = IRC_SERVER(data);
-	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	priv->me = NULL;
-}
-
-static void
 connect_ready(GObject *source, GAsyncResult *res, gpointer data)
 {
 	GError *err = NULL;
@@ -1325,8 +1315,8 @@ connect_ready(GObject *source, GAsyncResult *res, gpointer data)
 	g_autofree char *password = g_settings_get_string (settings, "server-password");
 	priv->me = irc_user_new (nick);
 	g_object_set (priv->me, "realname", realname, "username", username, NULL); // FIXME: Username might be wrong
-	g_object_weak_ref (G_OBJECT(priv->me), on_me_weak_ref, self);
-	usertable_insert (self, priv->me);
+	if (!g_hash_table_replace (priv->usertable, priv->me->nick, priv->me))
+		g_assert_not_reached ();
 
 	if (*password)
 		irc_server_write_linef (self, "PASS %s\r\nCAP LS 302\r\nNICK %s\r\nUSER %s * * :%s",
@@ -1394,7 +1384,11 @@ irc_server_disconnect (IrcServer *self)
 	g_hash_table_foreach (priv->chantable, foreach_channel_set_parted, NULL);
   	g_hash_table_foreach (priv->querytable, foreach_query_set_offline, NULL);
 	//g_hash_table_remove_all (priv->usertable); // Chan/Query references users
-	g_clear_object (&priv->me);
+	if (priv->me)
+	{
+		g_assert (g_hash_table_remove (priv->usertable, priv->me->nick));
+		g_clear_object (&priv->me);
+	}
 
 	g_assert (g_hash_table_size (priv->usertable) == 0); // Nothing should be left
 
