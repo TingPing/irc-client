@@ -65,6 +65,7 @@
  * @BEEP: Creates a beep
  * @REVERSE: Reverses normal colors
  * @CTCP: Surrounds CTCP messages
+ * @HEXCOLOR: Starts a color in hex format
  *
  * Characters for IRC attributes.
  */
@@ -78,6 +79,7 @@ typedef enum {
 	BEEP = '\007',
 	REVERSE = '\026',
 	CTCP = '\001',
+	HEXCOLOR = '\004',
 } IrcAttribute;
 
 gboolean irc_isattr (guchar c) G_GNUC_CONST;

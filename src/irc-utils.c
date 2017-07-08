@@ -20,6 +20,20 @@
 
 #include <string.h>
 #include "irc-utils.h"
+#include "irc-private.h"
+
+gboolean
+_irc_util_is_valid_hex_color (const char *str, const gsize len)
+{
+	if (len < 6)
+		return FALSE;
+
+	for (guint8 i = 0; i < 5; i++)
+		if (!g_ascii_isxdigit (str[i]))
+			return FALSE;
+
+	return TRUE;
+}
 
 /**
  * irc_strip_attributes:
@@ -35,28 +49,51 @@ irc_strip_attributes (const char *str)
 {
 	gsize len = strlen (str);
 	char *stripped = g_malloc (len + 1);
-	guint8 rcol = 0, bgcol = 0;
+	guint8 parsing_color = 0; // Goes to 2 and counts down
+	gboolean parsing_bg = FALSE, parsing_hexcolor = FALSE;
 	char *dst = stripped;
+
+	#define COLOR_START 2
 
 	while (len-- > 0)
 	{
-		if (rcol > 0 && (g_ascii_isdigit (*str) || (*str == ',' && g_ascii_isdigit (str[1]) && !bgcol)))
+		if (parsing_color > 0 && (g_ascii_isdigit (*str) || (*str == ',' && g_ascii_isdigit (str[1]) && !parsing_bg)))
 		{
 			if (str[1] != ',')
-				rcol--;
+				parsing_color--;
 			if (*str == ',')
 			{
-				rcol = 2;
-				bgcol = 1;
+				parsing_color = COLOR_START;
+				parsing_bg = TRUE;
+			}
+		}
+		else if (parsing_hexcolor == TRUE && (_irc_util_is_valid_hex_color (str, len) ||
+										      (*str == ',' && _irc_util_is_valid_hex_color (str + 1, len - 1))))
+		{
+			if (*str == ',')
+			{
+				str += 6;
+				len -= 6;
+				parsing_hexcolor = FALSE;
+			}
+			else
+			{
+				str += 5;
+				len -= 5;
 			}
 		}
 		else
 		{
-			rcol = bgcol = 0;
+			parsing_hexcolor = parsing_bg = FALSE;
+			parsing_color = 0;
 			switch (*str)
 			{
 			case COLOR:
-				rcol = 2;
+				parsing_color = COLOR_START;
+				break;
+			case HEXCOLOR:
+				parsing_hexcolor = TRUE;
+				break;
 			case HIDDEN:
 			case BEEP:
 			case RESET:

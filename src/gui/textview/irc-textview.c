@@ -21,6 +21,7 @@
 #include "irc-textview.h"
 #include "irc-utils.h"
 #include "irc-colorscheme.h"
+#include "irc-private.h"
 
 struct _IrcTextview
 {
@@ -62,20 +63,81 @@ apply_color_tag (GtkTextBuffer *buf, const GtkTextIter *start, const GtkTextIter
 	}
 }
 
+static inline void
+apply_hex_color_tag (GtkTextBuffer *buf, const GtkTextIter *start, const GtkTextIter *end, char *fgcolor, char *bgcolor)
+{
+	char colorstr[8];
+	char namestr[10];
+	GtkTextTagTable *table = gtk_text_buffer_get_tag_table (buf);
+	GtkTextTag *tag;
+
+	if (*fgcolor)
+	{
+		g_sprintf (colorstr, "#%s", fgcolor);
+		g_sprintf (namestr, "fg-%s", fgcolor);
+
+		if (!(tag = gtk_text_tag_table_lookup (table, namestr)))
+		{
+			tag = gtk_text_tag_new (namestr);
+			g_object_set (G_OBJECT(tag), "foreground", colorstr, NULL);
+			g_assert (gtk_text_tag_table_add (table, tag));
+		}
+
+		gtk_text_buffer_apply_tag (buf, tag, start, end);
+		memset (fgcolor, '\000', 7);
+	}
+	if (*bgcolor)
+	{
+		g_sprintf (colorstr, "#%s", bgcolor);
+		g_sprintf (namestr, "bg-%s", bgcolor);
+
+		if (!(tag = gtk_text_tag_table_lookup (table, namestr)))
+		{
+			tag = gtk_text_tag_new (namestr);
+			g_object_set (G_OBJECT(tag), "background", colorstr, NULL);
+			g_assert (gtk_text_tag_table_add (table, tag));
+		}
+
+		gtk_text_buffer_apply_tag (buf, tag, start, end);
+		memset (bgcolor, '\000', 7);
+	}
+}
+
+static int
+extract_hex_colors (char *text, char *fgcolor, char *bgcolor)
+{
+	char *p = text;
+	gsize len = strlen (text);
+
+	if (_irc_util_is_valid_hex_color (p, MIN(6, len)))
+	{
+		strncpy (fgcolor, text, 6);
+		len -= 6;
+		p += 6;
+	}
+	if (*p == ',' && _irc_util_is_valid_hex_color (p + 1, MIN(6, len - 1)))
+	{
+		strncpy (bgcolor, p + 1, 6);
+		p += 7;
+	}
+
+	return (int)(p - text);
+}
+
 static void
 apply_irc_tags (GtkTextBuffer *buf, const char *text, const int offset)
 {
 	gboolean bold = FALSE, italic = FALSE, underline = FALSE;
-	char fgcol[3] = { 0 }, bgcol[3] = { 0 };
-	GtkTextIter bstart, istart, ustart, cur_iter, cstart;
+	char fgcol[3] = { 0 }, bgcol[3] = { 0 }, hexfgcol[7] = { 0 }, hexbgcol[7] = { 0 };
+	GtkTextIter bstart, istart, ustart, cur_iter, cstart, hexcstart;
 	const int line = gtk_text_buffer_get_line_count (buf);
-	gushort parsing_color = 0;
+	gushort parsing_color = 0, parsing_hexcolor = 0;
 	gtk_text_buffer_get_iter_at_line (buf, &cur_iter, line);
 	gtk_text_iter_set_line_offset (&cur_iter, offset);
 
 #define STOP_COLOR G_STMT_START \
 { \
-	parsing_color = 0; \
+	parsing_color = parsing_hexcolor = 0; \
 } \
 G_STMT_END
 
@@ -83,6 +145,8 @@ G_STMT_END
 { \
 	if (*fgcol || *bgcol) \
 		apply_color_tag (buf, &cstart, &cur_iter, fgcol, bgcol); \
+	else if (*hexfgcol || *hexbgcol) \
+		apply_hex_color_tag (buf, &hexcstart, &cur_iter, hexfgcol, hexbgcol); \
 } \
 G_STMT_END
 
@@ -102,6 +166,12 @@ G_STMT_END
 			APPLY_COLOR;
 			cstart = cur_iter;
 			parsing_color = 1;
+			continue;
+		case HEXCOLOR:
+			STOP_COLOR;
+			APPLY_COLOR;
+			hexcstart = cur_iter;
+			parsing_hexcolor = 1;
 			continue;
 		case RESET:
 			STOP_COLOR;
@@ -157,54 +227,60 @@ G_STMT_END
 			// themes colors for text, i don't want to tag all text
 			continue;
 		default:
-			if (!parsing_color)
+			if (parsing_color)
 			{
-				FORWARD_CHAR;
-				continue;
-			}
-
-			if (!g_ascii_isdigit (*p))
-			{
-				if (*p == ',' && parsing_color <= 3)
+				if (!g_ascii_isdigit (*p))
 				{
-					parsing_color = 4;
+					if (*p == ',' && parsing_color <= 3)
+					{
+						parsing_color = 4;
+						continue;
+					}
+					else if (parsing_color == 4) // We had a comma but never used it
+					{
+						parsing_color = 6;
+						FORWARD_CHAR;
+					}
+					else
+						parsing_color = 6;
+				}
+				// don't parse background color without a comma
+				else if (parsing_color == 3 && *p != ',')
+					parsing_color = 6;
+
+				switch (parsing_color)
+				{
+				case 1:
+					fgcol[0] = *p;
+					parsing_color++;
+					continue;
+				case 2:
+					fgcol[1] = *p;
+					parsing_color++;
+					continue;
+				case 4:
+					bgcol[0] = *p;
+					parsing_color++;
+					continue;
+				case 5:
+					bgcol[1] = *p;
+					parsing_color++;
 					continue;
 				}
-				else if (parsing_color == 4) // We had a comma but never used it
-				{
-					parsing_color = 6;
-					FORWARD_CHAR;
-				}
-				else
-					parsing_color = 6;
-			}
-			// don't parse background color without a comma
-			else if (parsing_color == 3 && *p != ',')
-				parsing_color = 6;
 
-			switch (parsing_color)
+				g_assert (parsing_color == 6);
+				STOP_COLOR;
+				FORWARD_CHAR;
+			}
+			else if (parsing_hexcolor)
 			{
-			case 1:
-				fgcol[0] = *p;
-				parsing_color++;
-				continue;
-			case 2:
-				fgcol[1] = *p;
-				parsing_color++;
-				continue;
-			case 4:
-				bgcol[0] = *p;
-				parsing_color++;
-				continue;
-			case 5:
-				bgcol[1] = *p;
-				parsing_color++;
-				continue;
+				p += extract_hex_colors (p, hexfgcol, hexbgcol) - 1;
+				STOP_COLOR;
 			}
-
-			g_assert (parsing_color == 6);
-			STOP_COLOR;
-			FORWARD_CHAR;
+			else
+			{
+				FORWARD_CHAR;
+			}
 		}
 	}
 

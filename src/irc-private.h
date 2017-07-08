@@ -21,3 +21,4 @@
 #include "irc-context.h"
 
 gboolean handle_command (IrcContext *ctx, const GStrv, const GStrv);
+gboolean _irc_util_is_valid_hex_color (const char *str, const gsize len);

@@ -36,8 +36,11 @@ test_strip (void)
 	g_autofree char *stripped = irc_strip_attributes (orig);
 	g_assert_cmpstr (stripped, ==, "testing");
 
-  	g_autofree char *stripped2 = irc_strip_attributes ("\003,,3\003,3,3\0033,,3\0033333");
+  	g_autofree char *stripped2 = irc_strip_attributes ("\003,,3\003,3,3\0033,,3\0033333\003\003");
 	g_assert_cmpstr (stripped2, ==, ",,3,3,,333");
+
+	g_autofree char *stripped3 = irc_strip_attributes ("\004,,test \004FFFFFF,FFFFFFtest \004FFFFFF,test \004FFZZYYQQ \00400FF00FF \004\004FF");
+	g_assert_cmpstr (stripped3, ==, ",,test test ,test FFZZYYQQ FF FF");
 }
 
 static void
