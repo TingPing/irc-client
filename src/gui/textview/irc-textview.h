@@ -24,7 +24,11 @@
 G_BEGIN_DECLS
 
 #define IRC_TYPE_TEXTVIEW (irc_textview_get_type())
-G_DECLARE_FINAL_TYPE (IrcTextview, irc_textview, IRC, TEXTVIEW, GtkTextView)
+G_DECLARE_DERIVABLE_TYPE (IrcTextview, irc_textview, IRC, TEXTVIEW, GtkTextView)
+
+struct _IrcTextviewClass {
+	GtkTextViewClass parent_class;
+};
 
 IrcTextview *irc_textview_new (void);
 void irc_textview_append_text (IrcTextview *self, const char *text, time_t stamp);

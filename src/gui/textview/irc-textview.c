@@ -23,11 +23,6 @@
 #include "irc-colorscheme.h"
 #include "irc-private.h"
 
-struct _IrcTextview
-{
-	GtkTextView parent_instance;
-};
-
 typedef struct
 {
 	char *search;
