@@ -547,13 +547,13 @@ inbound_endofnames (IrcServer *self, IrcMessage *msg)
 }
 
 static char *
-join_list (GList *list)
+join_list (GList *list, const char sep)
 {
 	GString *str = g_string_new (list->data);
 
 	while ((list = g_list_next (list)))
 	{
-		g_string_append_c (str, ',');
+		g_string_append_c (str, sep);
 		g_string_append (str, list->data);
 	}
 
@@ -568,12 +568,27 @@ inbound_endofmotd (IrcServer *self)
 	if (g_hash_table_size (priv->chantable) != 0) // Had previous connection
 	{
 		g_autoptr(GList) channels = g_hash_table_get_keys (priv->chantable);
-		g_autofree char *join_str = join_list (channels);
+		g_autofree char *join_str = join_list (channels, ',');
 
 		// TODO: Keys and long lines
 		irc_server_write_linef (self, "JOIN %s", join_str);
 	}
-	// TODO: Monitor queries again
+	if (g_hash_table_size (priv->querytable) != 0)
+	{
+		g_autoptr(GList) queries = g_hash_table_get_keys (priv->querytable);
+		if (priv->caps & IRC_SERVER_SUPPORT_MONITOR)
+		{
+			g_autofree char *join_str = join_list (queries, ',');
+
+			irc_server_write_linef (self, "MONITOR + %s", join_str);
+		}
+		else
+		{
+			g_autofree char *join_str = join_list (queries, ' ');
+
+			irc_server_write_linef (self, "ISON %s", join_str);
+		}
+	}
 }
 
 static void
@@ -657,10 +672,10 @@ inbound_nick (IrcServer *self, IrcMessage *msg)
 }
 
 static void
-inbound_user_online (IrcServer *self, const char *users, gboolean online)
+inbound_user_online (IrcServer *self, const char *users, gboolean online, const char *str_sep)
 {
   	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	g_auto(GStrv) nicks = g_strsplit (users, ",", -1);
+	g_auto(GStrv) nicks = g_strsplit (users, str_sep, -1);
 
 	for (gsize i = 0; nicks[i]; ++i)
 	{
@@ -668,10 +683,16 @@ inbound_user_online (IrcServer *self, const char *users, gboolean online)
 		IrcQuery *query = g_hash_table_lookup (priv->querytable, nick);
 		if (query == NULL)
 		{
-			g_warning ("Inbound MONITOR for unknown user");
+			g_warning ("Inbound MONITOR/ISON for unknown user");
 			continue;
 		}
 		irc_query_set_online (query, online);
+		if (irc_query_get_user (query) == NULL)
+		{
+			g_autoptr(IrcUser) user = irc_user_new (nicks[i]);
+			usertable_insert (self, user);
+			g_object_set (query, "user", user, NULL);
+		}
 	}
 }
 
@@ -1024,6 +1045,9 @@ handle_incoming (IrcServer *self, const char *line)
 		case 5: // RPL_ISUPPORT
 			inbound_005 (self, msg);
 			break;
+		case 303: // RPL_ISON
+			inbound_user_online (self, irc_message_get_param(msg, 1), TRUE, " ");
+			break;
 		case 315: // RPL_ENDOFWHO
 			break;
 		case 332: // RPL_TOPIC
@@ -1056,10 +1080,10 @@ handle_incoming (IrcServer *self, const char *line)
 			}
 			break;
 		case 730: // RPL_MONONLINE
-			inbound_user_online (self, irc_message_get_param(msg, 1), TRUE);
+			inbound_user_online (self, irc_message_get_param(msg, 1), TRUE, ",");
 			break;
 		case 731: // RPL_MONOFFLINE
-			inbound_user_online (self, irc_message_get_param(msg, 1), FALSE);
+			inbound_user_online (self, irc_message_get_param(msg, 1), FALSE, ",");
 			break;
 		case 903: // RPL_SASLSUCCESS
 		case 904: // RPL_SASLFAIL
@@ -1241,23 +1265,23 @@ on_readline_ready (GObject *source, GAsyncResult *res, gpointer data)
 	GError *err = NULL;
 	GDataInputStream *in_stream = G_DATA_INPUT_STREAM(source);
 	gsize len;
+	IrcServer *server = IRC_SERVER(data);
 
 	input = g_data_input_stream_read_line_finish (in_stream, res, &len, &err);
 	if (err != NULL)
 	{
 		g_warning ("Reading error: %s", err->message);
 		g_clear_error (&err);
+		irc_server_disconnect (server);
 		return;
 	}
 	else if (input == NULL)
 	{
 		g_warning ("Empty line, End of stream");
-	  	IrcServer *server = IRC_SERVER(data);
 		irc_server_disconnect (server);
 		return;
 	}
 
-	IrcServer *server = IRC_SERVER(data);
 	IrcServerPrivate *priv = irc_server_get_instance_private (server);
 
 	g_assert (len <= G_MAXSSIZE);

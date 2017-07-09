@@ -131,6 +131,14 @@ irc_query_set_property (GObject *obj, guint prop_id, const GValue *val, GParamSp
 	}
 }
 
+IrcUser *
+irc_query_get_user (IrcQuery *self)
+{
+	IrcQueryPrivate *priv = irc_query_get_instance_private (self);
+
+	return priv->user;
+}
+
 static IrcContext *
 irc_query_iface_get_parent (IrcContext *ctx)
 {

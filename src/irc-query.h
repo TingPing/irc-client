@@ -30,5 +30,6 @@ G_DECLARE_FINAL_TYPE (IrcQuery, irc_query, IRC, QUERY, GObject)
 
 IrcQuery *irc_query_new (IrcContext *parent, IrcUser *user) NON_NULL();
 void irc_query_set_online (IrcQuery *self, gboolean online) NON_NULL(1);
+IrcUser *irc_query_get_user (IrcQuery *self) NON_NULL();
 
 G_END_DECLS
