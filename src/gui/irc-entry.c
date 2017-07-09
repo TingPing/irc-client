@@ -1,6 +1,6 @@
 /* irc-entry.c
  *
- * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
+ * Copyright (C) 2017 Patrick Griffis <tingping@tingping.se>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,23 +20,23 @@
 #include "irc-entrybuffer.h"
 #include "irc-context-manager.h"
 
-typedef struct
-{
-	GtkTreeModel *comp_model;
-} IrcEntryPrivate;
-
 struct _IrcEntry
 {
-	GtkEntry parent_instance;
+	IrcTextview parent_instance;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (IrcEntry, irc_entry, GTK_TYPE_ENTRY)
+typedef struct
+{
+	GListModel *comp_model;
+} IrcEntryPrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (IrcEntry, irc_entry, IRC_TYPE_TEXTVIEW)
 
 static void
 irc_entry_push_into_history (GSimpleAction *action, GVariant *param, gpointer data)
 {
-	GtkEntry *self = GTK_ENTRY(data);
-	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_entry_get_buffer (self));
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_text_view_get_buffer (self));
 
 	irc_entrybuffer_push_into_history (buf);
 }
@@ -44,8 +44,8 @@ irc_entry_push_into_history (GSimpleAction *action, GVariant *param, gpointer da
 static void
 irc_entry_history_up (GSimpleAction *action, GVariant *param, gpointer data)
 {
-	GtkEntry *self = GTK_ENTRY(data);
-	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_entry_get_buffer (self));
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_text_view_get_buffer (self));
 
 	irc_entrybuffer_history_up (buf);
 }
@@ -53,8 +53,8 @@ irc_entry_history_up (GSimpleAction *action, GVariant *param, gpointer data)
 static void
 irc_entry_history_down (GSimpleAction *action, GVariant *param, gpointer data)
 {
-	GtkEntry *self = GTK_ENTRY(data);
-	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_entry_get_buffer (self));
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_text_view_get_buffer (self));
 
 	irc_entrybuffer_history_down (buf);
 }
@@ -64,71 +64,87 @@ irc_entry_tab_complete (GSimpleAction *action, GVariant *param, gpointer data)
 {
 	IrcEntry *self = IRC_ENTRY(data);
 	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
+	//GtkTextBuffer *buf = gtk_text_view_get_buffer (self);
 
-	if (priv->comp_model == NULL)
-		return;
-}
-
-void
-irc_entry_set_completion_model (IrcEntry *self, GtkTreeModel *model)
-{
-  	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
-
-	priv->comp_model = model;
-
-	// TODO: This is just temp, need to manually handle completion
-	// as this is inflexible
-	GtkEntryCompletion *comp = gtk_entry_completion_new ();
-	gtk_entry_completion_set_model (comp, model);
-	gtk_entry_completion_set_text_column (comp, 0);
-	gtk_entry_completion_set_popup_completion (comp, FALSE);
-	gtk_entry_completion_set_inline_completion (comp, TRUE);
-	gtk_entry_set_completion (GTK_ENTRY(self), comp);
+	if (priv->comp_model)
+	{
+		g_print("TODO\n");
+	}
 }
 
 static void
-irc_entry_activate (GtkEntry *entry)
+irc_entry_activate (GSimpleAction *action, GVariant *param, gpointer data)
 {
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	GtkTextBuffer *buf = gtk_text_view_get_buffer (self);
 	IrcContextManager *mgr = irc_context_manager_get_default ();
 	IrcContext *ctx = irc_context_manager_get_front_context (mgr);
 
-	const char *text = gtk_entry_get_text (entry);
-	if (text != NULL && *text)
+	GtkTextIter start, end;
+	gtk_text_buffer_get_start_iter (buf, &start);
+	end = start;
+	gboolean has_another_line = gtk_text_iter_forward_to_line_end (&end);
+
+	while (TRUE)
 	{
-		if (IRC_IS_CONTEXT(ctx))
+		g_autofree char *text = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
+		if (text != NULL && *text)
 		{
-			if (*text == '/')
+			if (IRC_IS_CONTEXT(ctx))
 			{
-				irc_context_run_command (ctx, text + 1);
-			}
-			else
-			{
-				g_autofree char *say_command = g_strconcat ("say ", text, NULL);
-				irc_context_run_command (ctx, say_command);
+				if (*text == '/')
+				{
+					irc_context_run_command (ctx, text + 1);
+				}
+				else
+				{
+					g_autofree char *say_command = g_strconcat ("say ", text, NULL);
+					irc_context_run_command (ctx, say_command);
+				}
 			}
 		}
 
-		irc_entrybuffer_push_into_history (IRC_ENTRYBUFFER(gtk_entry_get_buffer (entry))); // Gets rid of text
-	}
+		if (!has_another_line || !gtk_text_iter_forward_line (&start))
+		{
+			irc_entrybuffer_push_into_history (IRC_ENTRYBUFFER(buf)); // Gets rid of text
+			return;
+		}
 
-	GTK_ENTRY_CLASS (irc_entry_parent_class)->activate (entry);
+		end = start;
+		has_another_line = gtk_text_iter_forward_to_line_end (&end);
+	}
 }
 
+void
+irc_entry_set_completion_model (IrcEntry *self, GListModel *model)
+{
+	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
+	g_clear_object (&priv->comp_model);
+	priv->comp_model = g_object_ref (model);
+}
 
 IrcEntry *
 irc_entry_new (void)
 {
-	IrcEntrybuffer *buf = irc_entrybuffer_new ();
-	// This buffer should never really be used
-	// but this class should *always* have a buffer of the correct type
-	return g_object_new (IRC_TYPE_ENTRY, "buffer", buf, NULL);
+	IrcEntrybuffer *buffer = irc_entrybuffer_new ();
+	return g_object_new (IRC_TYPE_ENTRY, "buffer", buffer,
+	                                     "editable", TRUE,
+	                                     "border-width", 3,
+	                                     "margin", 6,
+	                                     "top-margin", 3,
+	                                     "bottom-margin", 3,
+	                                     "pixels-above-lines", 3,
+	                                     "pixels-below-lines", 3,
+	                                     "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 }
 
 static void
 irc_entry_finalize (GObject *object)
 {
-	//IrcEntry *self = IRC_ENTRY(object);
-	//IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
+	IrcEntry *self = IRC_ENTRY(object);
+	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
+
+	g_clear_object (&priv->comp_model);
 
 	G_OBJECT_CLASS (irc_entry_parent_class)->finalize (object);
 }
@@ -136,11 +152,13 @@ irc_entry_finalize (GObject *object)
 static void
 irc_entry_class_init (IrcEntryClass *klass)
 {
+	GtkWidgetClass *wid_class = GTK_WIDGET_CLASS (klass);
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	GtkEntryClass *entry_class = GTK_ENTRY_CLASS (klass);
 
 	object_class->finalize = irc_entry_finalize;
-	entry_class->activate = irc_entry_activate;
+
+	// Hack to theme like GtkEntry. Seems to work...
+	gtk_widget_class_set_css_name (wid_class, "entry");
 }
 
 static void
@@ -151,13 +169,15 @@ irc_entry_init (IrcEntry *self)
 		{ .name = "push_into_history", .activate = irc_entry_push_into_history },
 		{ .name = "history_up", .activate = irc_entry_history_up },
 		{ .name = "history_down", .activate = irc_entry_history_down },
+		{ .name = "activate", .activate = irc_entry_activate },
 		{ .name = "tab_complete", .activate = irc_entry_tab_complete, .parameter_type = "b" },
 	};
-	const char * const push_accels[] = { "<Primary>Up", NULL };
-	const char * const up_accels[] = { "Up", NULL };
-	const char * const down_accels[] = { "Down", NULL };
+	const char * const push_accels[] = { "<Primary><Shift>Up", NULL };
+	const char * const up_accels[] = { "<Primary>Up", NULL };
+	const char * const down_accels[] = { "<Primary>Down", NULL };
 	const char * const tab_accels[] = { "Tab", NULL };
 	const char * const tabreverse_accels[] = { "<Shift>ISO_Left_Tab", NULL };
+	const char * const activate_accels[] = { "Return", NULL };
 
 	g_action_map_add_action_entries (G_ACTION_MAP (group), actions, G_N_ELEMENTS(actions), self);
 	gtk_widget_insert_action_group (GTK_WIDGET(self), "entry", G_ACTION_GROUP(group));
@@ -168,7 +188,5 @@ irc_entry_init (IrcEntry *self)
 	gtk_application_set_accels_for_action (app, "entry.history_down", down_accels );
 	gtk_application_set_accels_for_action (app, "entry.tab_complete(false)", tab_accels );
 	gtk_application_set_accels_for_action (app, "entry.tab_complete(true)", tabreverse_accels );
-
-	GtkStyleContext *style = gtk_widget_get_style_context (GTK_WIDGET(self));
-	gtk_style_context_add_class (style, "irc-textview");
+	gtk_application_set_accels_for_action (app, "entry.activate", activate_accels );
 }

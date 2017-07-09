@@ -1,6 +1,6 @@
 /* irc-entry.h
  *
- * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
+ * Copyright (C) 2017 Patrick Griffis <tingping@tingping.se>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,17 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
+#include "irc-textview.h"
 #include "irc-utils.h"
 
 G_BEGIN_DECLS
 
 #define IRC_TYPE_ENTRY (irc_entry_get_type())
-G_DECLARE_FINAL_TYPE (IrcEntry, irc_entry, IRC, ENTRY, GtkEntry)
+
+G_DECLARE_FINAL_TYPE (IrcEntry, irc_entry, IRC, ENTRY, IrcTextview)
 
 IrcEntry *irc_entry_new (void);
-void irc_entry_set_completion_model (IrcEntry *self, GtkTreeModel *model) NON_NULL(1);
+void irc_entry_set_completion_model (IrcEntry *self, GListModel *model) NON_NULL();
 
 G_END_DECLS
+

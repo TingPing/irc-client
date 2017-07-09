@@ -1,6 +1,6 @@
 /* irc-entrybuffer.h
  *
- * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
+ * Copyright (C) 2017 Patrick Griffis <tingping@tingping.se>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 G_BEGIN_DECLS
 
 #define IRC_TYPE_ENTRYBUFFER (irc_entrybuffer_get_type())
-G_DECLARE_FINAL_TYPE (IrcEntrybuffer, irc_entrybuffer, IRC, ENTRYBUFFER, GtkEntryBuffer)
+G_DECLARE_FINAL_TYPE (IrcEntrybuffer, irc_entrybuffer, IRC, ENTRYBUFFER, GtkTextBuffer)
 
 IrcEntrybuffer *irc_entrybuffer_new (void);
 void irc_entrybuffer_push_into_history (IrcEntrybuffer *self);

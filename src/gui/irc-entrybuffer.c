@@ -17,6 +17,7 @@
  */
 
 #include "irc-entrybuffer.h"
+#include "irc-colorscheme.h"
 
 struct _IrcEntrybuffer
 {
@@ -29,7 +30,7 @@ typedef struct
 	int index;
 } IrcEntrybufferPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (IrcEntrybuffer, irc_entrybuffer, GTK_TYPE_ENTRY_BUFFER)
+G_DEFINE_TYPE_WITH_PRIVATE (IrcEntrybuffer, irc_entrybuffer, GTK_TYPE_TEXT_BUFFER)
 
 void
 irc_entrybuffer_history_up (IrcEntrybuffer *self)
@@ -45,7 +46,7 @@ irc_entrybuffer_history_up (IrcEntrybuffer *self)
 		--priv->index; // Continuing
 
 	char *text = g_queue_peek_nth (priv->history, (guint)priv->index);
-	gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER(self), text, -1);
+	gtk_text_buffer_set_text (GTK_TEXT_BUFFER(self), text, -1);
 }
 
 void
@@ -60,31 +61,37 @@ irc_entrybuffer_history_down (IrcEntrybuffer *self)
 	{
 		// Saw everything, back to normal
 		priv->index = -1;
-		gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER(self), "", 0);
+		gtk_text_buffer_set_text (GTK_TEXT_BUFFER(self), "", 0);
 		return;
 	}
 	else
 		++priv->index;
 
 	char *text = g_queue_peek_nth (priv->history, (guint)priv->index);
-	gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER(self), text, -1);
+	gtk_text_buffer_set_text (GTK_TEXT_BUFFER(self), text, -1);
 }
 
 void
 irc_entrybuffer_push_into_history (IrcEntrybuffer *self)
 {
   	IrcEntrybufferPrivate *priv = irc_entrybuffer_get_instance_private (self);
-	const char *current_text = gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER(self));
+	GtkTextBuffer *buf = GTK_TEXT_BUFFER(self);
 
-	g_queue_push_tail (priv->history, g_strdup (current_text));
-	gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER(self), "", 0);
+	GtkTextIter start, end;
+	gtk_text_buffer_get_start_iter (buf, &start);
+	gtk_text_buffer_get_end_iter (buf, &end);
+
+	char *current_text = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
+
+	g_queue_push_tail (priv->history, current_text);
+	gtk_text_buffer_set_text (buf, "", 0);
 	priv->index = -1;
 }
 
 IrcEntrybuffer *
 irc_entrybuffer_new (void)
 {
-	return g_object_new (IRC_TYPE_ENTRYBUFFER, NULL);
+	return g_object_new (IRC_TYPE_ENTRYBUFFER, "tag-table", irc_colorscheme_get_default(), NULL);
 }
 
 static void

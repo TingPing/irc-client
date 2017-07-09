@@ -151,7 +151,7 @@ on_front_context_changed (IrcContextManager *mgr, IrcContext *ctx, gpointer data
 	else
 	{
 		gtk_stack_set_visible_child (priv->viewstack, GTK_WIDGET(ctx_ui->tab));
-		gtk_entry_set_buffer (GTK_ENTRY(priv->entry), GTK_ENTRY_BUFFER(ctx_ui->entrybuffer));
+		gtk_text_view_set_buffer (GTK_TEXT_VIEW(priv->entry), GTK_TEXT_BUFFER(ctx_ui->entrybuffer));
 		if (IRC_IS_CHANNEL (ctx) && ctx_ui->popover == NULL)
 		{
 			ctx_ui->popover = GTK_WIDGET(g_object_ref (
@@ -161,7 +161,7 @@ on_front_context_changed (IrcContextManager *mgr, IrcContext *ctx, gpointer data
 		gtk_header_bar_set_title (priv->headerbar, irc_context_get_name (ctx));
 		if (IRC_IS_CHANNEL(ctx))
 		{
-			//irc_entry_set_completion_model (priv->entry, GTK_TREE_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))));
+			irc_entry_set_completion_model (priv->entry, G_LIST_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))));
 			// FIXME: The topic changes
 			update_topic (G_OBJECT(ctx), NULL, priv->headerbar);
 		}
@@ -346,9 +346,8 @@ irc_window_init (IrcWindow *self)
 	gtk_widget_show_all (GTK_WIDGET(priv->sw_cv));
 
 	priv->entry = irc_entry_new ();
-	GspellEntry *spell_entry = gspell_entry_get_from_gtk_entry (GTK_ENTRY(priv->entry));
-	gspell_entry_basic_setup (spell_entry);
-	g_object_set (priv->entry, "margin", 5, NULL);
+	GspellTextView *spell_view = gspell_text_view_get_from_gtk_text_view (GTK_TEXT_VIEW(priv->entry));
+	gspell_text_view_basic_setup (spell_view);
 	gtk_container_add (GTK_CONTAINER(priv->entry_frame), GTK_WIDGET(priv->entry));
 	gtk_widget_show (GTK_WIDGET(priv->entry));
 

@@ -38,6 +38,8 @@ libirc_sources = [
   'irc-user-list-item.c',
   'irc-utils.c',
   'gui/irc-application.c',
+  'gui/irc-entry.c',
+  'gui/irc-entrybuffer.c',
   'gui/irc-window.c',
   'gui/irc-userlist.c',
   'gui/textview/irc-textview.c',
@@ -45,8 +47,6 @@ libirc_sources = [
   'gui/contextview/irc-contextview.c',
   'gui/textview/irc-chatview.c',
   'gui/textview/irc-colorscheme.c',
-  'gui/entry/irc-entry.c',
-  'gui/entry/irc-entrybuffer.c',
   'gui/contextview/irc-cellrenderer-bubble.c',
   'gui/preferences/irc-preferences-window.c',
   'gui/preferences/irc-network-properties.c',
@@ -66,11 +66,11 @@ libirc_public_headers = [
   'irc-user-list-item.h',
   'irc-utils.h',
   'gui/irc-application.h',
+  'gui/irc-entry.h',
+  'gui/irc-entrybuffer.h',
   'gui/textview/irc-chatview.h',
   'gui/contextview/irc-contextview.h',
   'gui/textview/irc-textview.h',
-  'gui/entry/irc-entrybuffer.h',
-  'gui/entry/irc-entry.h',
   'gui/irc-userlist.h',
   'gui/irc-window.h',
 ]
@@ -141,7 +141,7 @@ libirc_link_flags = [
 libirc_includes = [
   '.', 'gui',
   'gui/textview', 'gui/contextview',
-  'gui/entry', 'gui/preferences',
+  'gui/preferences',
 ]
 
 libirc = shared_library('irc',
