@@ -19,6 +19,7 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include "irc-utils.h"
 
 G_BEGIN_DECLS
 
@@ -29,5 +30,7 @@ IrcEntrybuffer *irc_entrybuffer_new (void);
 void irc_entrybuffer_push_into_history (IrcEntrybuffer *self);
 void irc_entrybuffer_history_up (IrcEntrybuffer *self);
 void irc_entrybuffer_history_down (IrcEntrybuffer *self);
+gboolean irc_entrybuffer_tab_complete (IrcEntrybuffer *self);
+void irc_entrybuffer_set_completion_model (IrcEntrybuffer *self, GListModel *model);
 
 G_END_DECLS

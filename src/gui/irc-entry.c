@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
 #include "irc-entry.h"
 #include "irc-entrybuffer.h"
 #include "irc-context-manager.h"
@@ -25,12 +26,7 @@ struct _IrcEntry
 	IrcTextview parent_instance;
 };
 
-typedef struct
-{
-	GListModel *comp_model;
-} IrcEntryPrivate;
-
-G_DEFINE_TYPE_WITH_PRIVATE (IrcEntry, irc_entry, IRC_TYPE_TEXTVIEW)
+G_DEFINE_TYPE (IrcEntry, irc_entry, IRC_TYPE_TEXTVIEW)
 
 static void
 irc_entry_push_into_history (GSimpleAction *action, GVariant *param, gpointer data)
@@ -57,19 +53,6 @@ irc_entry_history_down (GSimpleAction *action, GVariant *param, gpointer data)
 	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_text_view_get_buffer (self));
 
 	irc_entrybuffer_history_down (buf);
-}
-
-static void
-irc_entry_tab_complete (GSimpleAction *action, GVariant *param, gpointer data)
-{
-	IrcEntry *self = IRC_ENTRY(data);
-	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
-	//GtkTextBuffer *buf = gtk_text_view_get_buffer (self);
-
-	if (priv->comp_model)
-	{
-		g_print("TODO\n");
-	}
 }
 
 static void
@@ -115,12 +98,13 @@ irc_entry_activate (GSimpleAction *action, GVariant *param, gpointer data)
 	}
 }
 
-void
-irc_entry_set_completion_model (IrcEntry *self, GListModel *model)
+static void
+irc_entry_tab_complete (GSimpleAction *action, GVariant *param, gpointer data)
 {
-	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
-	g_clear_object (&priv->comp_model);
-	priv->comp_model = g_object_ref (model);
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	IrcEntrybuffer *buf = IRC_ENTRYBUFFER(gtk_text_view_get_buffer (self));
+
+	irc_entrybuffer_tab_complete (buf);
 }
 
 IrcEntry *
@@ -139,23 +123,9 @@ irc_entry_new (void)
 }
 
 static void
-irc_entry_finalize (GObject *object)
-{
-	IrcEntry *self = IRC_ENTRY(object);
-	IrcEntryPrivate *priv = irc_entry_get_instance_private (self);
-
-	g_clear_object (&priv->comp_model);
-
-	G_OBJECT_CLASS (irc_entry_parent_class)->finalize (object);
-}
-
-static void
 irc_entry_class_init (IrcEntryClass *klass)
 {
 	GtkWidgetClass *wid_class = GTK_WIDGET_CLASS (klass);
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-	object_class->finalize = irc_entry_finalize;
 
 	// Hack to theme like GtkEntry. Seems to work...
 	gtk_widget_class_set_css_name (wid_class, "entry");

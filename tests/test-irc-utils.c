@@ -27,6 +27,9 @@ static void
 test_cmp (void)
 {
 	g_assert_true (irc_str_equal ("AbCdeF{}|", "aBcDEf[]\\"));
+
+	g_assert_true (irc_str_has_prefix ("{}|fFaaaa", "[]\\Ff"));
+	g_assert_false (irc_str_has_prefix ("{}|", "[]\\Ff"));
 }
 
 static void

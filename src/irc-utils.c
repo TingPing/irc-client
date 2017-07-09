@@ -252,6 +252,39 @@ irc_str_cmp (const char *s1, const char *s2)
 }
 
 /**
+ * irc_str_has_prefix:
+ * @s1: string
+ * @s2: prefix of @s1
+ *
+ * Checks if @s1 contains the prefix @s2 ignoring case
+ * according to the IRC RFC.
+ *
+ * See Also: irc_tolower()
+ * Returns: %TRUE or %FALSE
+ */
+gboolean
+irc_str_has_prefix (const char *s1, const char *s2)
+{
+	const gsize len = strlen (s2);
+	gsize i = 0;
+	int c1, c2;
+
+	while (i < len)
+	{
+		if (!*s1)
+			return FALSE;
+
+		c1 = irc_tolower ((guchar)*s1);
+		c2 = irc_tolower ((guchar)*s2);
+		if (c1 != c2)
+			return FALSE;
+		s1++; s2++; i++;
+	}
+
+	return TRUE;
+}
+
+/**
  * irc_str_equal:
  * @str1: First string
  * @str2: Second string

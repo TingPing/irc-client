@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (IrcEntry, irc_entry, IRC, ENTRY, IrcTextview)
 
 IrcEntry *irc_entry_new (void);
-void irc_entry_set_completion_model (IrcEntry *self, GListModel *model) NON_NULL();
+void irc_entry_set_completion_model (IrcEntry *self, GListModel *model) NON_NULL(1);
 
 G_END_DECLS
 

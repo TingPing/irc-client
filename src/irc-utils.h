@@ -87,6 +87,7 @@ guint32 irc_str_hash (const char *str) G_GNUC_PURE NON_NULL();
 char *irc_strip_attributes (const char *str) G_GNUC_PURE NON_NULL();
 int irc_str_cmp (const char *s1, const char *s2) G_GNUC_PURE NON_NULL();
 gboolean irc_str_equal (const char *str1, const char *str2) G_GNUC_PURE NON_NULL();
+gboolean irc_str_has_prefix (const char *s1, const char *s2) G_GNUC_PURE NON_NULL();
 guchar irc_tolower (const guchar c) G_GNUC_CONST;
 char *irc_strcasestr (const char *haystack, const char *needle) G_GNUC_PURE NON_NULL();
 char *irc_sasl_encode_plain (const char *username, const char *password) NON_NULL();

@@ -161,7 +161,8 @@ on_front_context_changed (IrcContextManager *mgr, IrcContext *ctx, gpointer data
 		gtk_header_bar_set_title (priv->headerbar, irc_context_get_name (ctx));
 		if (IRC_IS_CHANNEL(ctx))
 		{
-			irc_entry_set_completion_model (priv->entry, G_LIST_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))));
+			irc_entrybuffer_set_completion_model (ctx_ui->entrybuffer,
+												  G_LIST_MODEL(irc_channel_get_users (IRC_CHANNEL(ctx))));
 			// FIXME: The topic changes
 			update_topic (G_OBJECT(ctx), NULL, priv->headerbar);
 		}
