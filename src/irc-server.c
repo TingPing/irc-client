@@ -346,6 +346,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 		g_signal_emit_by_name (dest_ctx, "activity", is_highlight || !is_chan);
 	irc_context_print_with_time (dest_ctx, formatted, msg->timestamp);
 }
+
 static void
 inbound_part (IrcServer *self, IrcMessage *msg)
 {
@@ -807,7 +808,7 @@ inbound_authenticate (IrcServer *self, IrcMessage *msg)
 		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
 		g_autofree char *user = g_settings_get_string (settings, "sasl-username");
 		g_autofree char *pass = g_settings_get_string (settings, "sasl-password");
-		g_autofree char*encoded = irc_sasl_encode_plain (user, pass);
+		g_autofree char *encoded = irc_sasl_encode_plain (user, pass);
 		irc_server_write_linef (self, "AUTHENTICATE %s", encoded);
 	}
 	else
