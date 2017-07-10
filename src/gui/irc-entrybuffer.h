@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
+#include <gtksourceview/gtksource.h>
 #include "irc-utils.h"
 
 G_BEGIN_DECLS
 
 #define IRC_TYPE_ENTRYBUFFER (irc_entrybuffer_get_type())
-G_DECLARE_FINAL_TYPE (IrcEntrybuffer, irc_entrybuffer, IRC, ENTRYBUFFER, GtkTextBuffer)
+G_DECLARE_FINAL_TYPE (IrcEntrybuffer, irc_entrybuffer, IRC, ENTRYBUFFER, GtkSourceBuffer)
 
 IrcEntrybuffer *irc_entrybuffer_new (void);
 void irc_entrybuffer_push_into_history (IrcEntrybuffer *self);

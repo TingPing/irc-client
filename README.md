@@ -24,6 +24,7 @@ everything yet. (Also yes win32 support will come eventually)
 ### Runtime deps
 
 - gtk3
+- gtksourceview3
 - glib-networking
 - libnotify
 - gspell

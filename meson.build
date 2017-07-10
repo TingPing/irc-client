@@ -69,6 +69,7 @@ libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
 libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
 libnotify_dep = dependency('libnotify')
 libgspell_dep = dependency('gspell-1', version: '>= 1.3.0')
+libgtksource_dep = dependency('gtksourceview-3.0')
 
 subdir('src')
 subdir('plugins')

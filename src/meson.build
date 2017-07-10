@@ -93,7 +93,8 @@ libirc_deps = [
   libgtk_dep,
   libpeas_dep,
   libnotify_dep,
-  libgspell_dep
+  libgspell_dep,
+  libgtksource_dep,
 ]
 
 pkgincludedir = join_paths(get_option('includedir'), 'irc-client')
@@ -158,7 +159,7 @@ libirc = shared_library('irc',
 
 libirc_dep = declare_dependency(
   sources: libirc_gen_headers,
-  dependencies: [libgio_dep, libgtk_dep],
+  dependencies: [libgio_dep, libgtk_dep, libgtksource_dep],
   link_with: libirc,
   include_directories: include_directories(libirc_includes),
 )
@@ -173,6 +174,7 @@ libirc_gir = gnome.generate_gir(
   install: true,
   includes: [
     'Gtk-3.0',
+    'GtkSource-3.0',
     'Gio-2.0'
   ],
   extra_args: [
@@ -187,6 +189,7 @@ if get_option('with-vapi')
     packages: [
       'gio-2.0',
       'gtk+-3.0',
+      'gtksourceview-3.0',
     ],
     install: true
   )

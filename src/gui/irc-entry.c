@@ -55,6 +55,24 @@ irc_entry_history_down (GSimpleAction *action, GVariant *param, gpointer data)
 }
 
 static void
+irc_entry_undo (GSimpleAction *action, GVariant *param, gpointer data)
+{
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	GtkSourceBuffer *buf = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer (self));
+
+	gtk_source_buffer_undo (buf);
+}
+
+static void
+irc_entry_redo (GSimpleAction *action, GVariant *param, gpointer data)
+{
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	GtkSourceBuffer *buf = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer (self));
+
+	gtk_source_buffer_redo (buf);
+}
+
+static void
 irc_entry_activate (GSimpleAction *action, GVariant *param, gpointer data)
 {
 	GtkTextView *self = GTK_TEXT_VIEW(data);
@@ -139,6 +157,8 @@ irc_entry_init (IrcEntry *self)
 		{ .name = "history_up", .activate = irc_entry_history_up },
 		{ .name = "history_down", .activate = irc_entry_history_down },
 		{ .name = "activate", .activate = irc_entry_activate },
+		{ .name = "undo", .activate = irc_entry_undo },
+		{ .name = "redo", .activate = irc_entry_redo },
 		{ .name = "tab_complete", .activate = irc_entry_tab_complete, .parameter_type = "b" },
 	};
 	const char * const push_accels[] = { "<Primary><Shift>Up", NULL };
@@ -147,6 +167,8 @@ irc_entry_init (IrcEntry *self)
 	const char * const tab_accels[] = { "Tab", NULL };
 	const char * const tabreverse_accels[] = { "<Shift>ISO_Left_Tab", NULL };
 	const char * const activate_accels[] = { "Return", NULL };
+	const char * const undo_accels[] = { "<Primary>z", NULL };
+	const char * const redo_accels[] = { "<Primary><Shift>z", NULL };
 
 	g_action_map_add_action_entries (G_ACTION_MAP (group), actions, G_N_ELEMENTS(actions), self);
 	gtk_widget_insert_action_group (GTK_WIDGET(self), "entry", G_ACTION_GROUP(group));
@@ -157,5 +179,7 @@ irc_entry_init (IrcEntry *self)
 	gtk_application_set_accels_for_action (app, "entry.history_down", down_accels );
 	gtk_application_set_accels_for_action (app, "entry.tab_complete(false)", tab_accels );
 	gtk_application_set_accels_for_action (app, "entry.tab_complete(true)", tabreverse_accels );
+	gtk_application_set_accels_for_action (app, "entry.undo", undo_accels );
+	gtk_application_set_accels_for_action (app, "entry.redo", redo_accels );
 	gtk_application_set_accels_for_action (app, "entry.activate", activate_accels );
 }

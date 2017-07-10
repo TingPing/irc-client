@@ -22,7 +22,7 @@
 
 struct _IrcEntrybuffer
 {
-	GtkEntryBuffer parent_instance;
+	GtkSourceBuffer parent_instance;
 };
 
 typedef struct
@@ -36,7 +36,7 @@ typedef struct
 	gboolean ignore_changed;
 } IrcEntrybufferPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (IrcEntrybuffer, irc_entrybuffer, GTK_TYPE_TEXT_BUFFER)
+G_DEFINE_TYPE_WITH_PRIVATE (IrcEntrybuffer, irc_entrybuffer, GTK_SOURCE_TYPE_BUFFER)
 
 void
 irc_entrybuffer_history_up (IrcEntrybuffer *self)
