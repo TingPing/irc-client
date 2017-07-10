@@ -166,7 +166,6 @@ irc_context_manager_add (IrcContextManager *self, IrcContext *ctx)
 	g_return_if_fail (ctx != NULL);
 	g_return_if_fail (IRC_IS_CONTEXT(ctx));
 
-	g_debug ("added %d", G_OBJECT(ctx)->ref_count);
 	IrcContext *parent = irc_context_get_parent (ctx);
 	if (parent == NULL)
 	{
@@ -228,7 +227,6 @@ irc_context_manager_remove (IrcContextManager *self, IrcContext *ctx)
 			g_signal_emit (self, obj_signals[CONTEXT_REMOVED], 0, ctx);
 		}
 		g_object_unref (ctx);
-		g_debug ("removed %d", G_OBJECT(ctx)->ref_count);
 	}
 	else
 	{
