@@ -179,39 +179,40 @@ irc_window_new (GApplication *app)
 	return g_object_new (IRC_TYPE_WINDOW, "application", app, NULL);
 }
 
-static void
-restore_window (IrcWindow *self)
-{
-	g_autoptr(GSettings) settings = g_settings_new ("se.tingping.IrcClient");
-	int width, height, x, y;
-	g_autoptr(GVariant) size = g_settings_get_value (settings, "window-size");
-	g_autoptr(GVariant) pos = g_settings_get_value (settings, "window-pos");
-
-	g_variant_get (size, "(ii)", &width, &height);
-	g_variant_get (pos, "(ii)", &x, &y);
-
-	if (width && height)
-		gtk_window_resize (GTK_WINDOW(self), width, height);
-	if (x && y)
-		gtk_window_move (GTK_WINDOW(self), x, y);
-}
-
 static gboolean
 irc_window_configure_event (GtkWidget *widget, GdkEventConfigure *event)
 {
 	g_autoptr(GSettings) settings = g_settings_new ("se.tingping.IrcClient");
-	GVariant * const size[] = {
-		g_variant_new_int32 (event->width),
-		g_variant_new_int32 (event->height),
-	};
+	int x, y;
+
+	gtk_window_get_position (GTK_WINDOW(widget), &x, &y);
 	GVariant * const pos[] = {
-		g_variant_new_int32 (event->x),
-		g_variant_new_int32 (event->y),
+		g_variant_new_int32 (x),
+		g_variant_new_int32 (y),
 	};
 
-	g_settings_set_value (settings, "window-size", g_variant_new_tuple (size, G_N_ELEMENTS(size)));
 	g_settings_set_value (settings, "window-pos", g_variant_new_tuple (pos, G_N_ELEMENTS(pos)));
 	return GTK_WIDGET_CLASS(irc_window_parent_class)->configure_event (widget, event);
+}
+
+static void
+irc_window_size_allocate (GtkWidget *widget, GtkAllocation *alloc)
+{
+	GTK_WIDGET_CLASS (irc_window_parent_class)->size_allocate (widget, alloc);
+
+	if (!gtk_window_is_maximized (GTK_WINDOW(widget)))
+	{
+		g_autoptr(GSettings) settings = g_settings_new ("se.tingping.IrcClient");
+		int width, height;
+
+		gtk_window_get_size (GTK_WINDOW(widget), &width, &height);
+		GVariant * const size[] = {
+			g_variant_new_int32 (width),
+			g_variant_new_int32 (height),
+		};
+
+		g_settings_set_value (settings, "window-size", g_variant_new_tuple (size, G_N_ELEMENTS(size)));
+	}
 }
 
 static IrcTextview *
@@ -292,6 +293,27 @@ on_search_state_changed (GSimpleAction *action, GVariant *param, gpointer data)
 }
 
 static void
+irc_window_constructed (GObject *object)
+{
+	IrcWindow *self = IRC_WINDOW(object);
+	g_autoptr(GSettings) settings = g_settings_new ("se.tingping.IrcClient");
+	int width, height, x, y;
+
+	g_autoptr(GVariant) size = g_settings_get_value (settings, "window-size");
+	g_autoptr(GVariant) pos = g_settings_get_value (settings, "window-pos");
+
+	g_variant_get (pos, "(ii)", &x, &y);
+	g_variant_get (size, "(ii)", &width, &height);
+
+	if (width && height)
+		gtk_window_set_default_size (GTK_WINDOW(self), width, height);
+	if (x && y)
+		gtk_window_move (GTK_WINDOW(self), x, y);
+
+	G_OBJECT_CLASS (irc_window_parent_class)->constructed (object);
+}
+
+static void
 irc_window_finalize (GObject *object)
 {
 	//IrcWindow *self = IRC_WINDOW(object);
@@ -307,7 +329,9 @@ irc_window_class_init (IrcWindowClass *klass)
 	GtkWidgetClass *wid_class = GTK_WIDGET_CLASS (klass);
 
 	object_class->finalize = irc_window_finalize;
+	object_class->constructed = irc_window_constructed;
 	wid_class->configure_event = irc_window_configure_event;
+	wid_class->size_allocate = irc_window_size_allocate;
 
 	gtk_widget_class_set_template_from_resource (wid_class, "/se/tingping/IrcClient/ui/window.ui");
 	gtk_widget_class_bind_template_child_private (wid_class, IrcWindow, viewstack);
@@ -358,6 +382,4 @@ irc_window_init (IrcWindow *self)
 
 	g_autoptr(GSettings) settings = g_settings_new ("se.tingping.IrcClient");
 	g_settings_bind (settings, "contextview-width", priv->paned, "position", G_SETTINGS_BIND_DEFAULT);
-
-	restore_window (self);
 }
