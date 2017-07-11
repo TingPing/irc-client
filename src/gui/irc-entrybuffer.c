@@ -19,6 +19,7 @@
 #include "irc-entrybuffer.h"
 #include "irc-colorscheme.h"
 #include "irc-user-list-item.h"
+#include "irc-text-common.h"
 
 struct _IrcEntrybuffer
 {
@@ -289,6 +290,21 @@ irc_entrybuffer_changed (GtkTextBuffer *buffer)
 {
 	reset_completion_state (IRC_ENTRYBUFFER(buffer));
 	GTK_TEXT_BUFFER_CLASS(irc_entrybuffer_parent_class)->changed (buffer);
+
+	GtkTextIter start, end;
+	gtk_text_buffer_get_start_iter (buffer, &start);
+	end = start;
+	gboolean has_another_line = gtk_text_iter_forward_to_line_end (&end);
+
+	while (TRUE)
+	{
+		apply_irc_tags (buffer, &start, &end, TRUE);
+		if (!has_another_line || !gtk_text_iter_forward_line (&start))
+			return;
+
+		end = start;
+		has_another_line = gtk_text_iter_forward_to_line_end (&end);
+	}
 }
 
 static void
