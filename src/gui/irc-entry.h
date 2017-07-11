@@ -18,14 +18,14 @@
 
 #pragma once
 
-#include "irc-textview.h"
+#include <gtk/gtk.h>
 #include "irc-utils.h"
 
 G_BEGIN_DECLS
 
 #define IRC_TYPE_ENTRY (irc_entry_get_type())
 
-G_DECLARE_FINAL_TYPE (IrcEntry, irc_entry, IRC, ENTRY, IrcTextview)
+G_DECLARE_FINAL_TYPE (IrcEntry, irc_entry, IRC, ENTRY, GtkTextView)
 
 IrcEntry *irc_entry_new (void);
 void irc_entry_set_completion_model (IrcEntry *self, GListModel *model) NON_NULL(1);

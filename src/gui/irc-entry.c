@@ -22,10 +22,10 @@
 
 struct _IrcEntry
 {
-	IrcTextview parent_instance;
+	GtkTextView parent_instance;
 };
 
-G_DEFINE_TYPE (IrcEntry, irc_entry, IRC_TYPE_TEXTVIEW)
+G_DEFINE_TYPE (IrcEntry, irc_entry, GTK_TYPE_TEXT_VIEW)
 
 static void
 irc_entry_push_into_history (GSimpleAction *action, GVariant *param, gpointer data)
