@@ -124,6 +124,16 @@ irc_entry_tab_complete (GSimpleAction *action, GVariant *param, gpointer data)
 	irc_entrybuffer_tab_complete (buf);
 }
 
+static void
+irc_entry_insert_character (GSimpleAction *action, GVariant *param, gpointer data)
+{
+	GtkTextView *self = GTK_TEXT_VIEW(data);
+	GtkTextBuffer *buf = GTK_TEXT_BUFFER(gtk_text_view_get_buffer (self));
+	const char *text = g_variant_get_string (param, NULL);
+
+	gtk_text_buffer_insert_at_cursor (buf, text, -1);
+}
+
 IrcEntry *
 irc_entry_new (void)
 {
@@ -160,6 +170,7 @@ irc_entry_init (IrcEntry *self)
 		{ .name = "undo", .activate = irc_entry_undo },
 		{ .name = "redo", .activate = irc_entry_redo },
 		{ .name = "tab_complete", .activate = irc_entry_tab_complete, .parameter_type = "b" },
+		{ .name = "insert_character", .activate = irc_entry_insert_character, .parameter_type = "s" },
 	};
 	const char * const push_accels[] = { "<Primary><Shift>Up", NULL };
 	const char * const up_accels[] = { "<Primary>Up", NULL };
@@ -169,6 +180,13 @@ irc_entry_init (IrcEntry *self)
 	const char * const activate_accels[] = { "Return", NULL };
 	const char * const undo_accels[] = { "<Primary>z", NULL };
 	const char * const redo_accels[] = { "<Primary><Shift>z", NULL };
+	const char * const bold_accels[] = { "<Primary>b", NULL };
+	const char * const underline_accels[] = { "<Primary>u", NULL };
+	const char * const italics_accels[] = { "<Primary>i", NULL };
+	const char * const color_accels[] = { "<Primary>k", NULL };
+	const char * const hexcolor_accels[] = { "<Primary><Shift>k", NULL };
+	const char * const reset_accels[] = { "<Primary>o", NULL };
+	const char * const reverse_accels[] = { "<Primary>r", NULL };
 
 	g_action_map_add_action_entries (G_ACTION_MAP (group), actions, G_N_ELEMENTS(actions), self);
 	gtk_widget_insert_action_group (GTK_WIDGET(self), "entry", G_ACTION_GROUP(group));
@@ -182,4 +200,11 @@ irc_entry_init (IrcEntry *self)
 	gtk_application_set_accels_for_action (app, "entry.undo", undo_accels );
 	gtk_application_set_accels_for_action (app, "entry.redo", redo_accels );
 	gtk_application_set_accels_for_action (app, "entry.activate", activate_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x03')", color_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x04')", hexcolor_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x02')", bold_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x1F')", underline_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x0F')", reset_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x1D')", italics_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x16')", reverse_accels );
 }
