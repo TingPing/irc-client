@@ -77,6 +77,10 @@ irc_colorscheme_new (void)
 	g_object_set (tag, "underline", PANGO_UNDERLINE_SINGLE, NULL);
 	gtk_text_tag_table_add (table, tag);
 
+	tag = gtk_text_tag_new ("hidden");
+	g_object_set (tag, "invisible", TRUE, NULL);
+	gtk_text_tag_table_add (table, tag);
+
   	tag = gtk_text_tag_new ("time");
 	g_object_set (tag, "foreground", "grey", "scale", PANGO_SCALE_SMALL, NULL);
 	gtk_text_tag_table_add (table, tag);

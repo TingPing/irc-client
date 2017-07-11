@@ -98,13 +98,48 @@ apply_hex_color_tag (GtkTextBuffer *buf, const GtkTextIter *start, const GtkText
 	}
 }
 
-static int
-extract_hex_colors (char *text, char *fgcolor, char *bgcolor)
+static void
+extract_colors (GtkTextIter *it, char *fgcolor, char *bgcolor)
 {
+	GtkTextIter end = *it;
+	gtk_text_iter_forward_chars (&end, 5);
+	g_autofree char *text = gtk_text_iter_get_text (it, &end);
+	char *p = text;
+
+	if (*p && g_ascii_isdigit (*p))
+	{
+		fgcolor[0] = *p++;
+		if (*p && g_ascii_isdigit (*p))
+			fgcolor[1] = *p++;
+	}
+	if (*p == ',')
+	{
+		p++;
+		if (*p && g_ascii_isdigit (*p))
+		{
+			bgcolor[0] = *p++;
+			if (*p && g_ascii_isdigit (*p))
+				bgcolor[1] = *p++;
+		}
+	}
+
+
+	if (p != text)
+	{
+		gtk_text_iter_forward_chars (it, (int)(p - text));
+	}
+}
+
+static void
+extract_hex_colors (GtkTextIter *it, char *fgcolor, char *bgcolor)
+{
+	GtkTextIter end = *it;
+	gtk_text_iter_forward_chars (&end, 13);
+	g_autofree char *text = gtk_text_iter_get_text (it, &end);
 	char *p = text;
 	gsize len = strlen (text);
 
-	if (_irc_util_is_valid_hex_color (p, MIN(6, len)))
+	if (_irc_util_is_valid_hex_color (text, MIN(6, len)))
 	{
 		strncpy (fgcolor, text, 6);
 		len -= 6;
@@ -116,179 +151,153 @@ extract_hex_colors (char *text, char *fgcolor, char *bgcolor)
 		p += 7;
 	}
 
-	return (int)(p - text);
+	if (p != text)
+	{
+		gtk_text_iter_forward_chars (it, (int)(p - text));
+	}
 }
 
 static void
-apply_irc_tags (GtkTextBuffer *buf, const char *text, const int offset)
+apply_irc_tags (GtkTextBuffer *buf, const GtkTextIter *start, const GtkTextIter *end, gboolean clear)
 {
-	gboolean bold = FALSE, italic = FALSE, underline = FALSE;
 	char fgcol[3] = { 0 }, bgcol[3] = { 0 }, hexfgcol[7] = { 0 }, hexbgcol[7] = { 0 };
-	GtkTextIter bstart, istart, ustart, cur_iter, cstart, hexcstart;
-	const int line = gtk_text_buffer_get_line_count (buf);
-	gushort parsing_color = 0, parsing_hexcolor = 0;
-	gtk_text_buffer_get_iter_at_line (buf, &cur_iter, line);
-	gtk_text_iter_set_line_offset (&cur_iter, offset);
+	GtkTextIter bold_start, italic_start, underline_start, color_start, hexcolor_start, hidden_start;
+	gboolean bold = FALSE, italic = FALSE, underline = FALSE, color = FALSE, hexcolor = FALSE, hidden = FALSE;
+	GtkTextIter cur_iter = *start;
 
 #define STOP_COLOR G_STMT_START \
 { \
-	parsing_color = parsing_hexcolor = 0; \
+	color = hexcolor = FALSE; \
 } \
 G_STMT_END
 
 #define APPLY_COLOR G_STMT_START \
 { \
 	if (*fgcol || *bgcol) \
-		apply_color_tag (buf, &cstart, &cur_iter, fgcol, bgcol); \
+		apply_color_tag (buf, &color_start, &cur_iter, fgcol, bgcol); \
 	else if (*hexfgcol || *hexbgcol) \
-		apply_hex_color_tag (buf, &hexcstart, &cur_iter, hexfgcol, hexbgcol); \
+		apply_hex_color_tag (buf, &hexcolor_start, &cur_iter, hexfgcol, hexbgcol); \
 } \
 G_STMT_END
 
-#define FORWARD_CHAR G_STMT_START \
+#define APPLY_HIDDEN G_STMT_START \
 { \
-	gtk_text_iter_forward_char (&cur_iter); \
+	GtkTextIter next = cur_iter; \
+	gtk_text_iter_forward_char (&next); \
+	gtk_text_buffer_apply_tag_by_name (buf, "hidden", &cur_iter, &next); \
 } \
 G_STMT_END
 
-	// NOTE: This must be exactly in sync with irc_strip_attributes();
-	for (char *p = (char*)text; *p ;p += g_utf8_skip[(guchar)*p])
-	{
-		switch(*p)
+#define APPLY(x) G_STMT_START \
+{ \
+	if (x) \
+	{ \
+		gtk_text_buffer_apply_tag_by_name (buf, #x, &x##_start, &cur_iter); \
+		x = FALSE; \
+	} \
+} \
+G_STMT_END
+
+#define START(x) G_STMT_START \
+{ \
+	x##_start = hidden_start = cur_iter; \
+	x = TRUE; \
+} \
+G_STMT_END
+
+#define START_OR_APPLY(x) G_STMT_START \
+{ \
+	if (!x) \
+	{ \
+		x##_start = cur_iter; \
+	} \
+	else \
+	{ \
+		gtk_text_buffer_apply_tag_by_name (buf, #x, &x##_start, &cur_iter); \
+	} \
+	x = !x; \
+} \
+G_STMT_END
+
+	if (clear)
+		gtk_text_buffer_remove_all_tags (buf, start, end);
+
+	do {
+		const gunichar c = gtk_text_iter_get_char (&cur_iter);
+		switch (c)
 		{
 		case COLOR:
+			APPLY_HIDDEN;
 			STOP_COLOR;
 			APPLY_COLOR;
-			cstart = cur_iter;
-			parsing_color = 1;
+			START(color);
 			continue;
 		case HEXCOLOR:
+			APPLY_HIDDEN;
 			STOP_COLOR;
 			APPLY_COLOR;
-			hexcstart = cur_iter;
-			parsing_hexcolor = 1;
+			START(hexcolor);
 			continue;
 		case RESET:
+			APPLY_HIDDEN;
 			STOP_COLOR;
 			APPLY_COLOR;
-			if (bold)
-			{
-				gtk_text_buffer_apply_tag_by_name (buf, "bold", &bstart, &cur_iter);
-				bold = FALSE;
-			}
-			if (italic)
-			{
-				gtk_text_buffer_apply_tag_by_name (buf, "italic", &istart, &cur_iter);
-				italic = FALSE;
-			}
-			if (underline)
-			{
-				gtk_text_buffer_apply_tag_by_name (buf, "underline", &ustart, &cur_iter);
-				underline = FALSE;
-			}
+			APPLY(color);
+			APPLY(italic);
+			APPLY(underline);
 			continue;
 		case ITALIC:
+			APPLY_HIDDEN;
 			STOP_COLOR;
-			if (!italic)
-				istart = cur_iter;
-			else
-				gtk_text_buffer_apply_tag_by_name (buf, "italic", &istart, &cur_iter);
-			italic = !italic;
+			START_OR_APPLY(italic);
 			continue;
 		case UNDERLINE:
+			APPLY_HIDDEN;
 			STOP_COLOR;
-			if (!underline)
-				ustart = cur_iter;
-			else
-				gtk_text_buffer_apply_tag_by_name (buf, "underline", &ustart, &cur_iter);
-			underline = !underline;
+			START_OR_APPLY(underline);
 			continue;
 		case BOLD:
+			APPLY_HIDDEN;
 			STOP_COLOR;
-			if (!bold)
-				bstart = cur_iter;
-			else
-				gtk_text_buffer_apply_tag_by_name (buf, "bold", &bstart, &cur_iter);
-			bold = !bold;
+			START_OR_APPLY(bold);
 			continue;
 		case HIDDEN:
+			APPLY_HIDDEN;
 			STOP_COLOR;
+			START_OR_APPLY(hidden);
 			// There is an "invisible" property, not sure if i want inbound text
 			// to be able to use this though
 			continue;
 		case REVERSE:
+			APPLY_HIDDEN;
 			STOP_COLOR;
 			// Reverse is a bit harder to handle since we use the default
 			// themes colors for text, i don't want to tag all text
 			continue;
 		default:
-			if (parsing_color)
+			if (color)
 			{
-				if (!g_ascii_isdigit (*p))
-				{
-					if (*p == ',' && parsing_color <= 3)
-					{
-						parsing_color = 4;
-						continue;
-					}
-					else if (parsing_color == 4) // We had a comma but never used it
-					{
-						parsing_color = 6;
-						FORWARD_CHAR;
-					}
-					else
-						parsing_color = 6;
-				}
-				// don't parse background color without a comma
-				else if (parsing_color == 3 && *p != ',')
-					parsing_color = 6;
-
-				switch (parsing_color)
-				{
-				case 1:
-					fgcol[0] = *p;
-					parsing_color++;
-					continue;
-				case 2:
-					fgcol[1] = *p;
-					parsing_color++;
-					continue;
-				case 4:
-					bgcol[0] = *p;
-					parsing_color++;
-					continue;
-				case 5:
-					bgcol[1] = *p;
-					parsing_color++;
-					continue;
-				}
-
-				g_assert (parsing_color == 6);
-				STOP_COLOR;
-				FORWARD_CHAR;
-			}
-			else if (parsing_hexcolor)
-			{
-				p += extract_hex_colors (p, hexfgcol, hexbgcol) - 1;
+				GtkTextIter it = cur_iter;
+				extract_colors (&it, fgcol, bgcol);
+				gtk_text_buffer_apply_tag_by_name (buf, "hidden", &cur_iter, &it);
 				STOP_COLOR;
 			}
-			else
+			else if (hexcolor)
 			{
-				FORWARD_CHAR;
+				GtkTextIter it = cur_iter;
+				extract_hex_colors (&it, hexfgcol, hexbgcol);
+				gtk_text_buffer_apply_tag_by_name (buf, "hidden", &cur_iter, &it);
+				STOP_COLOR;
 			}
 		}
-	}
+	} while (gtk_text_iter_compare (&cur_iter, end) != 0 && gtk_text_iter_forward_char (&cur_iter));
 
 	// End of line, add leftover tags
-	g_assert (gtk_text_iter_is_end (&cur_iter));
 	APPLY_COLOR;
-	if (bold)
-		gtk_text_buffer_apply_tag_by_name (buf, "bold", &bstart, &cur_iter);
-	if (italic)
-		gtk_text_buffer_apply_tag_by_name (buf, "italic", &istart, &cur_iter);
-	if (underline)
-		gtk_text_buffer_apply_tag_by_name (buf, "underline", &ustart, &cur_iter);
-
+	APPLY(bold);
+	APPLY(italic);
+	APPLY(underline);
+	APPLY(hidden);
 }
 
 static void
@@ -383,11 +392,17 @@ irc_textview_append_text (IrcTextview *self, const char *text, time_t stamp)
 	g_autofree char *stampstr = make_timestamp (stamp, &stamp_len);
 	if (stampstr != NULL)
 		gtk_text_buffer_insert_with_tags_by_name (buf, &iter, stampstr, stamp_len, "time", NULL);
+	gtk_text_buffer_insert (buf, &iter, text, -1);
 
-	g_autofree char *stripped = irc_strip_attributes (text);
-	gtk_text_buffer_insert (buf, &iter, stripped, -1);
-	apply_irc_tags (buf, text, stamp_len);
-	apply_misc_tags (buf, stripped, stamp_len);
+	const int line = gtk_text_buffer_get_line_count (buf);
+	GtkTextIter start, end;
+	gtk_text_buffer_get_iter_at_line (buf, &start, line);
+	gtk_text_iter_set_line_offset (&start, stamp_len);
+	end = start;
+	gtk_text_iter_forward_to_line_end (&end);
+
+	apply_irc_tags (buf, &start, &end, FALSE);
+	apply_misc_tags (buf, text, stamp_len);
 }
 
 
@@ -688,6 +703,9 @@ irc_textview_init (IrcTextview *self)
 	gtk_widget_insert_action_group (GTK_WIDGET(self), "textview", G_ACTION_GROUP(group));
 
 	GtkApplication *app = GTK_APPLICATION(g_application_get_default ());
-	gtk_application_set_accels_for_action (app, "textview.search-previous", previous_accels );
-	gtk_application_set_accels_for_action (app, "textview.search-next", next_accels );
+	if (app)
+	{
+		gtk_application_set_accels_for_action (app, "textview.search-previous", previous_accels );
+		gtk_application_set_accels_for_action (app, "textview.search-next", next_accels );
+	}
 }
