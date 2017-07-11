@@ -382,12 +382,14 @@ irc_textview_new (void)
 {
 	GtkTextBuffer *buffer = gtk_text_buffer_new (irc_colorscheme_get_default());
 	return g_object_new (IRC_TYPE_TEXTVIEW, "buffer", buffer,
-											"editable", FALSE,
-											"right-margin", 8, // Extra for scrollbar
-											"left-margin", 5,
-											"indent", -10, // Odd?
-											"cursor-visible", FALSE,
-											"wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
+	                                        "editable", FALSE,
+	                                        "right-margin", 9,
+	                                        "left-margin", 9,
+	                                        "top-margin", 9,
+	                                        "bottom-margin", 9,
+	                                        "indent", -10, // Indent wrap
+	                                        "cursor-visible", FALSE,
+	                                        "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 }
 
 static void
