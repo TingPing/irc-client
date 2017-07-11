@@ -215,6 +215,8 @@ G_STMT_END
 			APPLY_HIDDEN;
 			STOP_COLOR;
 			APPLY_COLOR;
+			APPLY(hidden);
+			APPLY(bold);
 			APPLY(color);
 			APPLY(italic);
 			APPLY(underline);
@@ -238,14 +240,12 @@ G_STMT_END
 			APPLY_HIDDEN;
 			STOP_COLOR;
 			START_OR_APPLY(hidden);
-			// There is an "invisible" property, not sure if i want inbound text
-			// to be able to use this though
 			continue;
 		case REVERSE:
 			APPLY_HIDDEN;
 			STOP_COLOR;
 			// Reverse is a bit harder to handle since we use the default
-			// themes colors for text, i don't want to tag all text
+			// themes colors for text
 			continue;
 		default:
 			if (color)
@@ -263,7 +263,7 @@ G_STMT_END
 				STOP_COLOR;
 			}
 		}
-	} while (gtk_text_iter_compare (&cur_iter, end) != 0 && gtk_text_iter_forward_char (&cur_iter));
+	} while (gtk_text_iter_compare (&cur_iter, end) < 0 && gtk_text_iter_forward_char (&cur_iter));
 
 	// End of line, add leftover tags
 	APPLY_COLOR;
