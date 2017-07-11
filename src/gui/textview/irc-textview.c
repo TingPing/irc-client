@@ -281,8 +281,7 @@ G_STMT_END
 
 	// End of line, add leftover tags
 	g_assert (gtk_text_iter_is_end (&cur_iter));
-	if (*fgcol || *bgcol)
-		apply_color_tag (buf, &cstart, &cur_iter, fgcol, bgcol);
+	APPLY_COLOR;
 	if (bold)
 		gtk_text_buffer_apply_tag_by_name (buf, "bold", &bstart, &cur_iter);
 	if (italic)
