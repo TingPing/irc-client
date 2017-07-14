@@ -26,6 +26,7 @@ everything yet. (Also yes win32 support will come eventually)
 - gtk3
 - gtksourceview3
 - glib-networking
+- gupnp-igd
 - libnotify
 - gspell
 - libpeas

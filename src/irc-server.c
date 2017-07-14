@@ -31,6 +31,7 @@
 #include "irc-utils.h"
 #include "irc-enumtypes.h"
 #include "irc-marshal.h"
+#include "irc-identd-service.h"
 
 struct _IrcServerClass
 {
@@ -1632,6 +1633,43 @@ irc_server_remove_child (IrcContext *ctx, IrcContext *child)
 	}
 }
 
+static void
+on_socket_client_event (GSocketClient *client, GSocketClientEvent  event, GSocketConnectable *connectable,
+                        GIOStream *connection, gpointer user_data)
+{
+	IrcServer *self = user_data;
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	IrcIdentdService *identd;
+
+	if (event == G_SOCKET_CLIENT_CONNECTED)
+	{
+		if (!(identd = irc_identd_service_get_default ()))
+			return;
+
+		g_autoptr(GError) err = NULL;
+		g_autoptr(GInetSocketAddress) addr = G_INET_SOCKET_ADDRESS(
+		                                     g_socket_connection_get_local_address (G_SOCKET_CONNECTION(connection), &err));
+		if (err != NULL)
+		{
+			g_warning ("Failed to get local address of connection: %s", err->message);
+			return;
+		}
+
+		GInetAddress *inet_addr = g_inet_socket_address_get_address (addr);
+		g_autofree char *addr_str = g_inet_address_to_string (inet_addr);
+
+		irc_identd_service_add_address (identd, addr_str);
+
+		// TODO: Clean this up
+		g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
+		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
+		g_autofree char *username = g_settings_get_string (settings, "server-username");
+		guint16 local_port = g_inet_socket_address_get_port (addr);
+
+		irc_identd_service_add_user (identd, username, local_port);
+	}
+}
+
 /**
  * irc_server_new_from_network:
  * @network_name: Name of network to read from in settings
@@ -1900,6 +1938,8 @@ irc_server_init (IrcServer *self)
 
 	priv->socket = g_socket_client_new ();
   	g_socket_client_set_timeout (priv->socket, 180);
+
+	g_signal_connect (priv->socket, "event", G_CALLBACK(on_socket_client_event), self);
 
 	priv->usertable = g_hash_table_new_full ((GHashFunc)priv->str_hash, (GEqualFunc)priv->str_equal,
 												NULL, NULL);

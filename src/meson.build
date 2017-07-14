@@ -31,6 +31,7 @@ libirc_sources = [
   'irc-context.c',
   'irc-command.c',
   'irc-channel.c',
+  'irc-identd-service.c',
   'irc-message.c',
   'irc-server.c',
   'irc-query.c',
@@ -60,6 +61,7 @@ libirc_public_headers = [
   'irc-context-action.h',
   'irc-context.h',
   'irc-channel.h',
+  'irc-identd-service.h',
   'irc-message.h',
   'irc-server.h',
   'irc-query.h',
@@ -97,6 +99,7 @@ libirc_deps = [
   libnotify_dep,
   libgspell_dep,
   libgtksource_dep,
+  libgupnp_igd_dep,
 ]
 
 pkgincludedir = join_paths(get_option('includedir'), 'irc-client')
