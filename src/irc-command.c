@@ -76,6 +76,33 @@ command_part (IrcContext *ctx, const GStrv words, const GStrv words_eol)
 	return TRUE;
 }
 
+static gboolean
+command_dcc (IrcContext *ctx, const GStrv words, const GStrv words_eol)
+{
+	const char *type = words[1];
+	const char *nick = words[2];
+
+	if (!*type || !*nick)
+		return FALSE;
+
+	if (!irc_str_equal (type, "chat"))
+		return FALSE;
+
+	IrcServer *serv = get_contexts_server (ctx);
+	if (!serv)
+		return FALSE;
+
+	if (!irc_server_get_is_connected (serv))
+		return FALSE;
+
+	IrcContextManager *mgr = irc_context_manager_get_default ();
+	IrcDccChat *chat = irc_dcc_chat_new (serv, nick);
+
+	irc_context_manager_add (mgr, IRC_CONTEXT(chat));
+
+	return TRUE;
+}
+
 static void
 allserv_foreach (GNode *node, gpointer data)
 {
@@ -103,6 +130,7 @@ static const struct command commands[] = {
 	{ 0xd98u, command_me, N_("me <message> | Sends an action to current channel") }, // me
 	{ 0x3463f3u, command_part, N_("part [<channel>] | Leaves the channel") }, // part
 	{ 0xc9af9137u, command_allserv, N_("allserv <command> | Runs command on all connected servers") }, // allserv
+	{ 0x183c4u, command_dcc, N_("dcc chat <nick> | Initiates a DCC session with a user") },
 };
 
 gboolean

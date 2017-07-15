@@ -1,6 +1,6 @@
-/* irc.h
+/* irc-dcc-chat.h
  *
- * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
+ * Copyright (C) 2017 Patrick Griffis <tingping@tingping.se>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,14 @@
 
 #pragma once
 
-#include "irc-channel.h"
-#include "irc-context-action.h"
-#include "irc-context-manager.h"
-#include "irc-context.h"
-#include "irc-dcc-chat.h"
-#include "irc-message.h"
-#include "irc-query.h"
 #include "irc-server.h"
-#include "irc-user.h"
-#include "irc-utils.h"
 
-#include "irc-application.h"
-#include "irc-chatview.h"
-#include "irc-contextview.h"
-#include "irc-entry.h"
-#include "irc-entrybuffer.h"
-#include "irc-textview.h"
-#include "irc-userlist.h"
-#include "irc-window.h"
+G_BEGIN_DECLS
+
+#define IRC_TYPE_DCC_CHAT (irc_dcc_chat_get_type())
+G_DECLARE_FINAL_TYPE (IrcDccChat, irc_dcc_chat, IRC, DCC_CHAT, GObject)
+
+IrcDccChat *irc_dcc_chat_new (IrcServer *server, const char *nick);
+
+G_END_DECLS
+
