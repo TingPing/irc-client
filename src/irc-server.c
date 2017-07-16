@@ -978,7 +978,7 @@ inbound_005 (IrcServer *self, IrcMessage *msg)
 			}
 
 			char *modes = NULL, *prefixes = NULL;
-			if ((sscanf (word + 7, "(%ms)%ms", &modes, &prefixes) != 2))
+			if ((sscanf (word + 7, "(%m[^)])%ms", &modes, &prefixes) != 2) || strlen(modes) != strlen(prefixes))
 				g_warning ("Bad PREFIX in 005");
 			else
 				g_object_set (self, "nickmodes", modes, "nickprefixes", prefixes, NULL);
