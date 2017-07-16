@@ -75,6 +75,8 @@ enum {
 	N_SIGNALS
 };
 
+#define ascii_str_equal(str1,str2) (g_ascii_strcasecmp(str1,str2) == 0)
+
 static guint obj_signals[N_SIGNALS];
 
 static void irc_server_iface_init (IrcContextInterface *iface);
@@ -443,7 +445,8 @@ inbound_join (IrcServer *self, IrcMessage *msg)
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
 	g_autofree char *nick = nick_from_host (msg->sender);
-	if (irc_str_equal(nick, priv->me->nick))
+	g_autoptr(IrcUser) user = usertable_lookup (self, nick);
+	if (user == priv->me)
 	{
 		inbound_ujoin (self, msg);
 		return;
@@ -457,7 +460,6 @@ inbound_join (IrcServer *self, IrcMessage *msg)
 		return;
 	}
 
-	g_autoptr(IrcUser) user = usertable_lookup (self, nick);
 	if (user == NULL)
 	{
 		user = irc_user_new (msg->sender);
@@ -845,7 +847,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 {
   	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
-	if (irc_str_equal (irc_message_get_param(msg, 1), "LS") || irc_str_equal (irc_message_get_param(msg, 1), "NEW"))
+	if (ascii_str_equal (irc_message_get_param(msg, 1), "LS") || ascii_str_equal (irc_message_get_param(msg, 1), "NEW"))
 	{
 	  	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
 		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
@@ -871,7 +873,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 				value++;
 			}
 
-			if (irc_str_equal (cap, "sasl"))
+			if (ascii_str_equal (cap, "sasl"))
 			{
 				if (!wants_sasl)
 					continue;
@@ -886,7 +888,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 
 			for (gsize y = 0; y < G_N_ELEMENTS(supported_caps); ++y)
 			{
-				if (irc_str_equal (cap, supported_caps[y].name))
+				if (ascii_str_equal (cap, supported_caps[y].name))
 				{
 					g_strlcat (outbuf, cap, sizeof (outbuf));
 					g_strlcat (outbuf, " ", sizeof (outbuf));
@@ -903,7 +905,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			priv->sent_capend = TRUE;
 		}
 	}
-	else if (irc_str_equal (irc_message_get_param(msg, 1), "ACK"))
+	else if (ascii_str_equal (irc_message_get_param(msg, 1), "ACK"))
 	{
 		g_auto(GStrv) caps = g_strsplit (irc_message_get_param(msg, 2), " ", 0);
 
@@ -912,7 +914,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			const char *cap = caps[i];
 			for (gsize y = 0; y < G_N_ELEMENTS(supported_caps); ++y)
 			{
-				if (irc_str_equal (cap, supported_caps[y].name))
+				if (ascii_str_equal (cap, supported_caps[y].name))
 				{
 					priv->caps |= supported_caps[y].cap;
 					break;
@@ -931,7 +933,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			priv->sent_capend = TRUE;
 		}
 	}
-	else if (irc_str_equal (irc_message_get_param(msg, 1), "DEL"))
+	else if (ascii_str_equal (irc_message_get_param(msg, 1), "DEL"))
 	{
 		g_auto(GStrv) caps = g_strsplit (irc_message_get_param(msg, 2), " ", 0);
 
@@ -940,7 +942,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			const char *cap = caps[i];
 			for (gsize y = 0; y < G_N_ELEMENTS(supported_caps); ++y)
 			{
-				if (irc_str_equal (cap, supported_caps[y].name))
+				if (ascii_str_equal (cap, supported_caps[y].name))
 				{
 					priv->caps ^= supported_caps[y].cap;
 					break;
@@ -948,12 +950,12 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 			}
 		}
 	}
-	else if (irc_str_equal (irc_message_get_param(msg, 1), "LIST"))
+	else if (ascii_str_equal (irc_message_get_param(msg, 1), "LIST"))
 	{
 		// Could clean up formatting
 		irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_param(msg, 2), msg->timestamp);
 	}
-	else if (irc_str_equal (irc_message_get_param(msg, 1), "NAK"))
+	else if (ascii_str_equal (irc_message_get_param(msg, 1), "NAK"))
 	{
 		// Don't realy have anything to do
 	}
