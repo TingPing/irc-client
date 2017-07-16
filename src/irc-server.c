@@ -735,10 +735,14 @@ inbound_user_online (IrcServer *self, const char *users, gboolean online, const 
 			continue;
 		}
 		irc_query_set_online (query, online);
-		if (irc_query_get_user (query) == NULL)
+		if (online == TRUE && irc_query_get_user (query) == NULL)
 		{
-			g_autoptr(IrcUser) user = irc_user_new (nicks[i]);
-			usertable_insert (self, user);
+			g_autoptr(IrcUser) user = usertable_lookup (self, nick);
+			if (user == NULL)
+			{
+				user = irc_user_new (nicks[i]);
+				usertable_insert (self, user);
+			}
 			g_object_set (query, "user", user, NULL);
 		}
 	}
