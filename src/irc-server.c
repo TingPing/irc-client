@@ -58,6 +58,9 @@ typedef struct
   	char *chan_modes;
 	char *encoding;
 	GQueue *sendq;
+	char *casemapping;
+	gboolean (*str_equal) (const char *, const char *);
+	guint32 (*str_hash) (const char *);
 
 	// CAP negotiation...
 	gboolean sent_capend;
@@ -75,8 +78,6 @@ enum {
 	N_SIGNALS
 };
 
-#define ascii_str_equal(str1,str2) (g_ascii_strcasecmp(str1,str2) == 0)
-
 static guint obj_signals[N_SIGNALS];
 
 static void irc_server_iface_init (IrcContextInterface *iface);
@@ -84,6 +85,50 @@ static void irc_server_iface_init (IrcContextInterface *iface);
 G_DEFINE_TYPE_WITH_CODE (IrcServer, irc_server, G_TYPE_OBJECT,
 						G_IMPLEMENT_INTERFACE (IRC_TYPE_CONTEXT, irc_server_iface_init)
 						G_ADD_PRIVATE (IrcServer))
+
+static gboolean
+ascii_str_equal (const char *str1, const char *str2)
+{
+	return g_ascii_strcasecmp(str1,str2) == 0;
+}
+
+static guint32
+ascii_str_hash (const char *str)
+{
+	const char *p = str;
+	guint32 h = 5381;
+
+	for (p = str; *p != '\0'; p++)
+		h = (h << 5) + h + (guchar)g_ascii_tolower (*p);
+
+	return h;
+}
+
+static gboolean
+unicode_str_equal (const char *str1, const char *str2)
+{
+	if (strcmp (str1, str2) == 0)
+		return TRUE; /* Exact same already */
+
+	// This *should* follow https://tools.ietf.org/html/rfc7613#section-3.2
+	// FIXME: Preparation should decompose full/half-width characters
+	//        No glib function for this?
+	g_autofree char *s1_lower = g_utf8_casefold (str1, -1);
+	g_autofree char *s2_lower = g_utf8_casefold (str2, -1);
+	g_autofree char *s1_normal = g_utf8_normalize (s1_lower, -1, G_NORMALIZE_NFC);
+	g_autofree char *s2_normal = g_utf8_normalize (s2_lower, -1, G_NORMALIZE_NFC);
+
+	return strcmp (s1_normal, s2_normal);
+}
+
+static guint32
+unicode_str_hash (const char *str)
+{
+	g_autofree char *str_lower = g_utf8_casefold (str, -1);
+	g_autofree char *str_normal = g_utf8_normalize (str_lower, -1, G_NORMALIZE_NFC);
+
+	return g_str_hash (str_normal);
+}
 
 static void
 on_user_unref (gpointer data, GObject *obj, gboolean is_last_ref)
@@ -139,7 +184,7 @@ inbound_ctcp (IrcServer *self, IrcMessage *msg)
 {
  	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
-	if (irc_str_equal(irc_message_get_param(msg, 0), priv->me->nick))
+	if (priv->str_equal (irc_message_get_param(msg, 0), priv->me->nick))
 	{
 		if (g_str_equal (irc_message_get_param(msg, 1), "\001VERSION\001"))
 		{
@@ -217,7 +262,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	}
 
 	g_autofree char *ctx_nick = nick_from_host (msg->sender);
-	if (irc_str_equal (ctx_nick, priv->me->nick))
+	if (priv->str_equal (ctx_nick, priv->me->nick))
 	{
 		is_you = TRUE;
 	}
@@ -272,7 +317,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	{
 		const char *display_name = irc_message_get_tag_value (msg, "display-name");
 		// It might be safe to support display-name != irc nick but not for now
-		if (display_name != NULL && irc_str_equal (nick, display_name))
+		if (display_name != NULL && priv->str_equal (nick, display_name))
 		{
 			g_free (nick);
 			nick = g_strdup (display_name);
@@ -962,6 +1007,51 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 }
 
 static void
+irc_server_set_casemapping (IrcServer *self, const char *mapping)
+{
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	if (g_str_equal (mapping, priv->casemapping))
+		return;
+
+	if (g_hash_table_size (priv->usertable) != 1
+		|| g_hash_table_size (priv->chantable) != 0
+		|| g_hash_table_size (priv->querytable) != 0)
+	{
+		g_warning ("Can only change casemapping on initial connection!");
+		return;
+	}
+
+	g_assert (g_hash_table_steal (priv->usertable, priv->me->nick));
+
+	if (g_str_equal (mapping, "ascii"))
+	{
+		priv->str_equal = ascii_str_equal;
+		priv->str_hash = ascii_str_hash;
+	}
+	else if (g_str_has_prefix (mapping, "rfc1459"))
+	{
+		// We implement the -strict variant but servers are inconsistent about meaning
+		priv->str_equal = irc_str_equal;
+		priv->str_hash = irc_str_hash;
+	}
+	else if (g_str_equal (mapping, "rfc7613"))
+	{
+		priv->str_equal = unicode_str_equal;
+		priv->str_hash = unicode_str_hash;
+	}
+	else
+	{
+		g_warning ("Unknown casemapping (%s) this server will probably not function!", mapping);
+	}
+
+	g_free (priv->casemapping);
+	priv->casemapping = g_strdup (mapping);
+
+	if (!g_hash_table_replace (priv->usertable, priv->me->nick, priv->me))
+		g_assert_not_reached ();
+}
+
+static void
 inbound_005 (IrcServer *self, IrcMessage *msg)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
@@ -996,6 +1086,10 @@ inbound_005 (IrcServer *self, IrcMessage *msg)
 		{
 			g_object_set (self, "chanmodes", word + 10, NULL);
 		}
+		else if (g_str_has_prefix (word, "CASEMAPPING="))
+		{
+			irc_server_set_casemapping (self, word + 12);
+		}
 		else if (g_str_equal (word, "WHOX"))
 			priv->caps |= IRC_SERVER_SUPPORT_WHOX;
 		else if (g_str_has_prefix (word, "MONITOR"))
@@ -1004,7 +1098,6 @@ inbound_005 (IrcServer *self, IrcMessage *msg)
 			priv->caps ^= IRC_SERVER_SUPPORT_MONITOR;
 		else if (g_str_equal (word, "-WHOX"))
 			priv->caps ^= IRC_SERVER_SUPPORT_WHOX;
-		// CASEMAPPING
 		// STATUSMSG
 	}
 
@@ -1212,6 +1305,14 @@ process_sendq (gpointer data)
 
 	priv->has_sendq = 0;
 	return G_SOURCE_REMOVE;
+}
+
+gboolean
+irc_server_str_equal (IrcServer *self, const char *str1, const char *str2)
+{
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+
+	return priv->str_equal (str1, str2);
 }
 
 /**
@@ -1789,16 +1890,20 @@ irc_server_init (IrcServer *self)
 {
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
+	priv->str_equal = irc_str_equal;
+	priv->str_hash = irc_str_hash;
+	priv->casemapping = g_strdup ("rfc1459");
+
 	priv->socket = g_socket_client_new ();
   	g_socket_client_set_timeout (priv->socket, 180);
 
-	priv->usertable = g_hash_table_new_full ((GHashFunc)irc_str_hash, (GEqualFunc)irc_str_equal,
+	priv->usertable = g_hash_table_new_full ((GHashFunc)priv->str_hash, (GEqualFunc)priv->str_equal,
 												NULL, NULL);
 
-	priv->chantable = g_hash_table_new_full ((GHashFunc)irc_str_hash, (GEqualFunc)irc_str_equal,
+	priv->chantable = g_hash_table_new_full ((GHashFunc)priv->str_hash, (GEqualFunc)priv->str_equal,
 												NULL, g_object_unref);
 
-  	priv->querytable = g_hash_table_new_full ((GHashFunc)irc_str_hash, (GEqualFunc)irc_str_equal,
+	priv->querytable = g_hash_table_new_full ((GHashFunc)priv->str_hash, (GEqualFunc)priv->str_equal,
 												NULL, g_object_unref);
 
 	priv->sendq = g_queue_new ();

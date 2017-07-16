@@ -74,6 +74,7 @@ void irc_server_disconnect (IrcServer *self) NON_NULL();
 void irc_server_flushq (IrcServer *self) NON_NULL();
 gboolean irc_server_get_is_connected (IrcServer *self) NON_NULL();
 void irc_server_write_line (IrcServer *self, const char *line) NON_NULL();
+gboolean irc_server_str_equal (IrcServer *self, const char *str1, const char *str2) NON_NULL();
 void irc_server_write_linef (IrcServer *self, const char *format, ...) G_GNUC_PRINTF(2, 3);
 GActionGroup *irc_server_get_action_group (void);
 
