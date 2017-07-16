@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include "irc-context-manager.h"
+#include "irc-server.h"
 
 struct _IrcContextManager
 {
@@ -93,12 +94,12 @@ irc_context_manager_find (IrcContextManager *self, const char *id)
 		const char *name = irc_context_get_name (IRC_CONTEXT(parent->data));
 		if (!wants_child)
 		{
-			if (irc_str_equal (id, name))
+			if (!g_ascii_strcasecmp (id, name))
 				return parent->data;
 		}
 		else
 		{
-			if (irc_str_equal (parent_name, name))
+			if (!g_ascii_strcasecmp (parent_name, name))
 				break;
 		}
 	}
@@ -110,8 +111,14 @@ irc_context_manager_find (IrcContextManager *self, const char *id)
 	i = 0;
 	while ((child = g_node_nth_child (parent, i++)))
 	{
-		const char *name = irc_context_get_name (IRC_CONTEXT(child->data));
-		if (irc_str_equal (name, id + split + 1))
+		const char *child_name = irc_context_get_name (IRC_CONTEXT(child->data));
+		const char *name = id + split + 1;
+		if (IRC_IS_SERVER (parent->data))
+		{
+			if (irc_server_str_equal (parent->data, child_name, name))
+				return child->data;
+		}
+		else if (!g_ascii_strcasecmp (child_name, name))
 		{
 			return child->data;
 		}
