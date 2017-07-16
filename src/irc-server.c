@@ -151,7 +151,7 @@ usertable_insert (IrcServer *self, IrcUser *user)
 	g_object_add_toggle_ref (G_OBJECT(user), on_user_unref, self);
 
 	if (!g_hash_table_replace (priv->usertable, user->nick, user))
-		g_assert_not_reached ();
+		g_warning ("User (%s) was already in the user table?", user->nick);
 }
 
 static inline IrcUser *
@@ -289,7 +289,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 			g_debug ("Found nothing for %s, making new", ctx_nick);
 			IrcQuery *query = irc_query_new (IRC_CONTEXT(self), user);
 			if (!g_hash_table_replace (priv->querytable, user->nick, query))
-				g_assert_not_reached ();
+				g_warning ("User (%s) was already in the query table?", user->nick);
 			dest_ctx = IRC_CONTEXT(query);
 			irc_context_manager_add (mgr, dest_ctx);
 			if (priv->caps & IRC_SERVER_SUPPORT_MONITOR)
@@ -473,7 +473,7 @@ inbound_ujoin (IrcServer *self, IrcMessage *msg)
 	{
 		channel = irc_channel_new (IRC_CONTEXT(self), chan_name);
 		if (!g_hash_table_replace (priv->chantable, channel->name, channel))
-			g_assert_not_reached ();
+			g_warning ("Channel (%s) was already in the user table?", channel->name);
 
 		IrcContextManager *mgr = irc_context_manager_get_default ();
 		irc_context_manager_add (mgr, IRC_CONTEXT(channel));
