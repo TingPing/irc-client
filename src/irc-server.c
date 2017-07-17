@@ -45,6 +45,7 @@ typedef struct
 	GIConv out_encoder;
 	char *host;
 	char *network_name;
+	GSettings *settings;
 	GSocketClient *socket;
 	GSocketConnection *conn;
 	GHashTable *usertable;
@@ -64,9 +65,11 @@ typedef struct
 	guint32 (*str_hash) (const char *);
 
 	// CAP negotiation...
+	char *sasl_mech;
 	gboolean sent_capend;
 	gboolean waiting_on_cap;
 	gboolean waiting_on_sasl;
+	gboolean have_cert;
 
 	guint has_sendq;
 	guint caps;
@@ -853,19 +856,28 @@ inbound_authenticate_response (IrcServer *self, IrcMessage *msg)
 static void
 inbound_authenticate (IrcServer *self, IrcMessage *msg)
 {
-	if (g_str_equal (irc_message_get_param(msg, 0), "+"))
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+
+	if (!g_str_equal (irc_message_get_param(msg, 0), "+"))
 	{
-	  	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-		g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
-		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
-		g_autofree char *user = g_settings_get_string (settings, "sasl-username");
-		g_autofree char *pass = g_settings_get_string (settings, "sasl-password");
+		g_warning ("Unknown AUTHENTICATE");
+		return;
+	}
+
+	if (ascii_str_equal (priv->sasl_mech, "EXTERNAL"))
+	{
+		irc_server_write_line (self, "AUTHENTICATE +");
+	}
+	else if (ascii_str_equal (priv->sasl_mech, "PLAIN"))
+	{
+		g_autofree char *user = g_settings_get_string (priv->settings, "sasl-username");
+		g_autofree char *pass = g_settings_get_string (priv->settings, "sasl-password");
 		g_autofree char *encoded = irc_sasl_encode_plain (user, pass);
 		irc_server_write_linef (self, "AUTHENTICATE %s", encoded);
 	}
 	else
 	{
-		g_warning ("Unknown AUTHENTICATE");
+		irc_server_write_line (self, "AUTHENTICATE *");
 	}
 }
 
@@ -899,13 +911,9 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 
 	if (ascii_str_equal (irc_message_get_param(msg, 1), "LS") || ascii_str_equal (irc_message_get_param(msg, 1), "NEW"))
 	{
-	  	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
-		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
-		char *user = g_settings_get_string (settings, "sasl-username");
-		char *pass = g_settings_get_string (settings, "sasl-password");
-		const gboolean wants_sasl = *user && *pass;
-		g_free (user);
-		g_free (pass);
+		g_autofree char *user = g_settings_get_string (priv->settings, "sasl-username");
+		g_autofree char *pass = g_settings_get_string (priv->settings, "sasl-password");
+		const gboolean have_sasl_pass = *user && *pass;
 
 		const gboolean multiline = *irc_message_get_param(msg, 2) == '*';
 		priv->waiting_on_cap = multiline;
@@ -925,14 +933,34 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 
 			if (ascii_str_equal (cap, "sasl"))
 			{
-				if (!wants_sasl)
+				if (!have_sasl_pass && !priv->have_cert)
 					continue;
 
-				// We only support PLAIN
-				if (value && !strstr (value, "PLAIN"))
-					continue;
+				if (value != NULL)
+				{
+					gboolean supported_mech = FALSE;
+					g_auto(GStrv) mechs = g_strsplit (value, ",", -1);
+					for (gsize j = 0; mechs[j]; ++j)
+					{
+						if ((priv->have_cert && ascii_str_equal (mechs[j], "EXTERNAL")) ||
+							(have_sasl_pass && ascii_str_equal (mechs[j], "PLAIN")))
+						{
+							g_free (priv->sasl_mech);
+							priv->sasl_mech = g_strdup (mechs[j]);
+							supported_mech = TRUE;
+							break;
+						}
+					}
+					if (supported_mech)
+						g_strlcat (outbuf, "sasl ", sizeof (outbuf));
+				}
+				else
+				{
+					g_free (priv->sasl_mech);
+					priv->sasl_mech = g_strdup (priv->have_cert ? "EXTERNAL" : "PLAIN");
+					g_strlcat (outbuf, "sasl ", sizeof (outbuf));
+				}
 
-				g_strlcat (outbuf, "sasl ", sizeof (outbuf));
 				continue;
 			}
 
@@ -974,7 +1002,7 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 
 		if ((priv->caps & IRC_SERVER_CAP_SASL) && !priv->waiting_on_sasl)
 		{
-			irc_server_write_line (self, "AUTHENTICATE PLAIN");
+			irc_server_write_linef (self, "AUTHENTICATE %s", priv->sasl_mech);
 			priv->waiting_on_sasl = TRUE;
 		}
 		else if (!priv->waiting_on_sasl && !priv->waiting_on_cap && !priv->sent_capend)
@@ -1440,12 +1468,10 @@ connect_ready(GObject *source, GAsyncResult *res, gpointer data)
 	g_data_input_stream_read_line_async (in_stream, G_PRIORITY_LOW, priv->read_cancel,
 										on_readline_ready, self);
 
-  	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
-	g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
-	g_autofree char *nick = g_settings_get_string (settings, "nickname");
-	g_autofree char *realname = g_settings_get_string (settings, "realname");
-	g_autofree char *username = g_settings_get_string (settings, "server-username");
-	g_autofree char *password = g_settings_get_string (settings, "server-password");
+	g_autofree char *nick = g_settings_get_string (priv->settings, "nickname");
+	g_autofree char *realname = g_settings_get_string (priv->settings, "realname");
+	g_autofree char *username = g_settings_get_string (priv->settings, "server-username");
+	g_autofree char *password = g_settings_get_string (priv->settings, "server-password");
 	priv->me = irc_user_new (nick);
 	g_object_set (priv->me, "realname", realname, "username", username, NULL); // FIXME: Username might be wrong
 	if (!g_hash_table_replace (priv->usertable, priv->me->nick, priv->me))
@@ -1526,6 +1552,9 @@ irc_server_disconnect (IrcServer *self)
 	g_assert (g_hash_table_size (priv->usertable) == 0); // Nothing should be left
 
 	// Reset CAP state
+	g_free (priv->sasl_mech);
+	priv->sasl_mech = g_strdup ("PLAIN");
+	priv->have_cert = FALSE;
 	priv->sent_capend = FALSE;
 	priv->waiting_on_cap = FALSE;
 	priv->waiting_on_sasl = FALSE;
@@ -1660,13 +1689,23 @@ on_socket_client_event (GSocketClient *client, GSocketClientEvent  event, GSocke
 
 		irc_identd_service_add_address (identd, addr_str);
 
-		// TODO: Clean this up
-		g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
-		g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
-		g_autofree char *username = g_settings_get_string (settings, "server-username");
+		g_autofree char *username = g_settings_get_string (priv->settings, "server-username");
 		guint16 local_port = g_inet_socket_address_get_port (addr);
 
 		irc_identd_service_add_user (identd, username, local_port);
+	}
+	else if (event == G_SOCKET_CLIENT_TLS_HANDSHAKING)
+	{
+		GTlsCertificate *cert;
+		g_autofree char *network_file = g_strconcat (priv->network_name, ".pem", NULL);
+		g_autofree char *cert_path = g_build_filename (g_get_user_data_dir (), "irc-client", "certs",
+													   network_file, NULL);
+		if ((cert = g_tls_certificate_new_from_file (cert_path, NULL)))
+		{
+			g_info ("Using TLS client certificate %s", cert_path);
+			g_tls_connection_set_certificate (G_TLS_CONNECTION(connection), cert);
+			priv->have_cert = TRUE;
+		}
 	}
 }
 
@@ -1700,10 +1739,12 @@ irc_server_finalize (GObject *object)
 	g_queue_free (priv->sendq);
 	g_clear_object (&priv->socket);
 	g_free (priv->host);
+	g_clear_pointer (&priv->sasl_mech, g_free);
   	g_hash_table_unref (priv->chantable);
 	g_hash_table_unref (priv->querytable);
   	g_hash_table_unref (priv->usertable); // channels reference users
   	g_clear_object (&priv->me);
+	g_clear_object (&priv->settings);
 
 	G_OBJECT_CLASS (irc_server_parent_class)->finalize (object);
 }
@@ -1858,11 +1899,22 @@ irc_server_set_property (GObject      *object,
 }
 
 static void
+irc_server_constructed (GObject *object)
+{
+	IrcServer *self = IRC_SERVER(object);
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+
+	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", priv->network_name, "/", NULL);
+	priv->settings = g_settings_new_with_path ("se.tingping.network", path);
+}
+
+static void
 irc_server_class_init (IrcServerClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
 	object_class->finalize = irc_server_finalize;
+	object_class->constructed = irc_server_constructed;
 	object_class->get_property = irc_server_get_property;
 	object_class->set_property = irc_server_set_property;
 	klass->inbound_line = handle_incoming;
@@ -1935,6 +1987,8 @@ irc_server_init (IrcServer *self)
 	priv->str_equal = irc_str_equal;
 	priv->str_hash = irc_str_hash;
 	priv->casemapping = g_strdup ("rfc1459");
+
+	priv->sasl_mech = g_strdup ("PLAIN");
 
 	priv->socket = g_socket_client_new ();
   	g_socket_client_set_timeout (priv->socket, 180);
