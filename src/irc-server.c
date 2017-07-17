@@ -58,6 +58,7 @@ typedef struct
 	char *nick_modes;
 	char *chan_types;
   	char *chan_modes;
+	char *statusmsg;
 	char *encoding;
 	GQueue *sendq;
 	char *casemapping;
@@ -270,12 +271,17 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	{
 		is_you = TRUE;
 	}
-	if (strchr (priv->chan_types, irc_message_get_param(msg, 0)[0]) == NULL)
+
+	const char *target_name = irc_message_get_param(msg, 0);
+	if (strchr (priv->statusmsg, target_name[0]))
+		target_name++;
+
+	if (strchr (priv->chan_types, target_name[0]) == NULL)
 	{
 		if (is_you)
 		{
 			g_free (ctx_nick);
-			ctx_nick = g_strdup (irc_message_get_param(msg, 0));
+			ctx_nick = g_strdup (target_name);
 		}
 		IrcContextManager *mgr = irc_context_manager_get_default ();
 		g_autoptr(IrcUser) user = usertable_lookup (self, ctx_nick);
@@ -305,7 +311,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	}
 	else
 	{
-		IrcChannel *chan = g_hash_table_lookup (priv->chantable, irc_message_get_param(msg, 0));
+		IrcChannel *chan = g_hash_table_lookup (priv->chantable, target_name);
 		if (chan == NULL)
 		{
 			g_warning ("Recieved PRIVMSG for unknown channel");
@@ -1123,6 +1129,10 @@ inbound_005 (IrcServer *self, IrcMessage *msg)
 		{
 			irc_server_set_casemapping (self, word + 12);
 		}
+		else if (g_str_has_prefix (word, "STATUSMSG="))
+		{
+			g_object_set (self, "statusmsg", word + 10, NULL);
+		}
 		else if (g_str_equal (word, "WHOX"))
 			priv->caps |= IRC_SERVER_SUPPORT_WHOX;
 		else if (g_str_has_prefix (word, "MONITOR"))
@@ -1131,7 +1141,6 @@ inbound_005 (IrcServer *self, IrcMessage *msg)
 			priv->caps ^= IRC_SERVER_SUPPORT_MONITOR;
 		else if (g_str_equal (word, "-WHOX"))
 			priv->caps ^= IRC_SERVER_SUPPORT_WHOX;
-		// STATUSMSG
 	}
 
 	irc_context_print_with_time (IRC_CONTEXT(self), irc_message_get_word_eol(msg, 1), msg->timestamp);
@@ -1766,6 +1775,7 @@ enum {
 	PROP_ME,
 	PROP_SOCKET,
 	PROP_CONN,
+	PROP_STATUSMSG,
   	N_PROPS,
 };
 
@@ -1825,6 +1835,9 @@ irc_server_get_property (GObject    *object,
 	case PROP_CONN:
 		g_value_set_object (value, priv->conn);
 		break;
+	case PROP_STATUSMSG:
+		g_value_set_string (value, priv->statusmsg);
+		break;
 	default:
 	    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 	}
@@ -1875,6 +1888,10 @@ irc_server_set_property (GObject      *object,
 	case PROP_NICKMODES:
 		g_free (priv->nick_modes);
 		priv->nick_modes = g_value_dup_string (value);
+		break;
+	case PROP_STATUSMSG:
+		g_free (priv->statusmsg);
+		priv->statusmsg = g_value_dup_string (value);
 		break;
 	case PROP_ENCODING:
 		if (priv->encoding)
@@ -1947,6 +1964,9 @@ irc_server_class_init (IrcServerClass *klass)
 	g_object_class_install_property (object_class, PROP_NICKMODES,
 									g_param_spec_string ("nickmodes", _("NickModes"), _("Valid modes for nicks"),
 										"ov", G_PARAM_READWRITE|G_PARAM_CONSTRUCT)); // RFC 1459
+	g_object_class_install_property (object_class, PROP_STATUSMSG,
+									g_param_spec_string ("statusmsg", _("STATUSMSG"), _("STATUSMSG characters"),
+										"", G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
 	g_object_class_install_property (object_class, PROP_ENCODING,
 									g_param_spec_string ("encoding", _("Encoding"), _("Encoding for incoming and outgoing messages"),
 										"UTF-8", G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
