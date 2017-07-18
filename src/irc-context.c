@@ -23,6 +23,12 @@
 #include "irc-private.h"
 #include "irc-marshal.h"
 
+/**
+ * SECTION:irc-context
+ * @title: IrcContext
+ * @short_description: Interface for common tab functionality
+ */
+
 G_DEFINE_INTERFACE (IrcContext, irc_context, G_TYPE_OBJECT)
 
 enum

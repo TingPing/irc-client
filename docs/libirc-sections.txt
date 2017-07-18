@@ -5,6 +5,7 @@
 
 <SECTION>
 <FILE>irc-application</FILE>
+<TITLE>IrcApplication</TITLE>
 IRC_TYPE_APPLICATION
 irc_application_new
 IrcApplication
@@ -12,6 +13,7 @@ IrcApplication
 
 <SECTION>
 <FILE>irc-cellrenderer-bubble</FILE>
+<TITLE>IrcCellrendererBubble</TITLE>
 irc_cellrenderer_bubble_new
 <SUBSECTION Standard>
 IRC_CELLRENDERER_BUBBLE
@@ -26,6 +28,7 @@ irc_cellrenderer_bubble_get_type
 
 <SECTION>
 <FILE>irc-channel</FILE>
+<TITLE>IrcChannel</TITLE>
 IRC_TYPE_CHANNEL
 IrcChannel
 irc_channel_new
@@ -36,6 +39,7 @@ irc_channel_get_users
 
 <SECTION>
 <FILE>irc-chanstore</FILE>
+<TITLE>IrcChanstore</TITLE>
 IRC_TYPE_CHANSTORE
 irc_chanstore_new
 IrcChanstore
@@ -43,6 +47,7 @@ IrcChanstore
 
 <SECTION>
 <FILE>irc-chatview</FILE>
+<TITLE>IrcChatview</TITLE>
 IRC_TYPE_CHATVIEW
 irc_chatview_new
 IrcChatview
@@ -50,6 +55,7 @@ IrcChatview
 
 <SECTION>
 <FILE>irc-colorscheme</FILE>
+<TITLE>IrcColorscheme</TITLE>
 irc_colorscheme_get_default
 </SECTION>
 
@@ -71,6 +77,7 @@ IrcContext
 
 <SECTION>
 <FILE>irc-context-action</FILE>
+<TITLE>IrcContextAction</TITLE>
 IRC_TYPE_CONTEXT_ACTION
 IrcContextActionCallback
 IRC_CONTEXT_ACTION_CALLBACK
@@ -80,6 +87,7 @@ IrcContextAction
 
 <SECTION>
 <FILE>irc-context-manager</FILE>
+<TITLE>IrcContextManager</TITLE>
 IRC_TYPE_CONTEXT_MANAGER
 irc_context_manager_get_default
 irc_context_manager_find
@@ -93,6 +101,7 @@ IrcContextManager
 
 <SECTION>
 <FILE>irc-contextview</FILE>
+<TITLE>IrcContextview</TITLE>
 IRC_TYPE_CONTEXTVIEW
 irc_contextview_new
 IrcContextview
@@ -100,6 +109,7 @@ IrcContextview
 
 <SECTION>
 <FILE>irc-entry</FILE>
+<TITLE>IrcEntry</TITLE>
 IRC_TYPE_ENTRY
 irc_entry_new
 irc_entry_set_completion_model
@@ -108,6 +118,7 @@ IrcEntry
 
 <SECTION>
 <FILE>irc-entrybuffer</FILE>
+<TITLE>IrcEntrybuffer</TITLE>
 IRC_TYPE_ENTRYBUFFER
 irc_entrybuffer_new
 irc_entrybuffer_push_into_history
@@ -120,6 +131,7 @@ IrcEntrybuffer
 
 <SECTION>
 <FILE>irc-identd-service</FILE>
+<TITLE>IrcIdentdService</TITLE>
 IrcIdentdService
 irc_identd_service_get_default
 irc_identd_service_add_user
@@ -128,6 +140,7 @@ irc_identd_service_add_address
 
 <SECTION>
 <FILE>irc-message</FILE>
+<TITLE>IrcMessage</TITLE>
 irc_message_new
 irc_message_copy
 irc_message_free
@@ -144,6 +157,7 @@ irc_message_get_type
 
 <SECTION>
 <FILE>irc-network-properties</FILE>
+<TITLE>IrcNetworkProperties</TITLE>
 IRC_TYPE_NETWORK_PROPERTIES
 irc_network_properties_new
 IrcNetworkProperties
@@ -151,6 +165,7 @@ IrcNetworkProperties
 
 <SECTION>
 <FILE>irc-preferences-window</FILE>
+<TITLE>IrcPreferencesWindow</TITLE>
 IRC_TYPE_PREFERENCES_WINDOW
 irc_preferences_window_new
 IrcPreferencesWindow
@@ -158,6 +173,7 @@ IrcPreferencesWindow
 
 <SECTION>
 <FILE>irc-query</FILE>
+<TITLE>IrcQuery</TITLE>
 IRC_TYPE_QUERY
 irc_query_new
 irc_query_set_online
@@ -167,6 +183,7 @@ IrcQuery
 
 <SECTION>
 <FILE>irc-server</FILE>
+<TITLE>IrcServer</TITLE>
 IRC_TYPE_SERVER
 IrcServerCap
 irc_server_new_from_network
@@ -185,11 +202,13 @@ IrcServerClass
 
 <SECTION>
 <FILE>irc-text-common</FILE>
+<TITLE>IrcTextCommon</TITLE>
 apply_irc_tags
 </SECTION>
 
 <SECTION>
 <FILE>irc-textview</FILE>
+<TITLE>IrcTextview</TITLE>
 <TITLE>IrcTextview</TITLE>
 IRC_TYPE_TEXTVIEW
 IrcTextviewClass
@@ -201,6 +220,7 @@ IrcTextview
 
 <SECTION>
 <FILE>irc-user</FILE>
+<TITLE>IrcUser</TITLE>
 IRC_TYPE_USER
 IrcUser
 irc_user_new
@@ -208,6 +228,7 @@ irc_user_new
 
 <SECTION>
 <FILE>irc-user-list</FILE>
+<TITLE>IrcUserList</TITLE>
 IRC_TYPE_USER_LIST
 irc_user_list_new
 irc_user_list_add
@@ -221,6 +242,7 @@ IrcUserList
 
 <SECTION>
 <FILE>irc-user-list-item</FILE>
+<TITLE>IrcUserListItem</TITLE>
 IRC_TYPE_USER_LIST_ITEM
 IrcUserListItem
 irc_user_list_item_new
@@ -228,6 +250,7 @@ irc_user_list_item_new
 
 <SECTION>
 <FILE>irc-userlist</FILE>
+<TITLE>IrcUserlist</TITLE>
 IRC_TYPE_USERLIST
 irc_userlist_new
 IrcUserlist
@@ -235,6 +258,7 @@ IrcUserlist
 
 <SECTION>
 <FILE>irc-utils</FILE>
+<TITLE>IrcUtils</TITLE>
 RETURNS_NON_NULL
 NON_NULL
 WARN_UNUSED_RESULT
@@ -254,6 +278,7 @@ irc_convert_invalid_text
 
 <SECTION>
 <FILE>irc-window</FILE>
+<TITLE>IrcWindow</TITLE>
 IRC_TYPE_WINDOW
 irc_window_new
 IrcWindow

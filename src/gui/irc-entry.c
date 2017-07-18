@@ -20,6 +20,20 @@
 #include "irc-entrybuffer.h"
 #include "irc-context-manager.h"
 
+/**
+ * SECTION:irc-entry
+ * @title: IrcEntry
+ * @short_description: Widget designed for IRC inputs
+ *
+ * Features:
+ * - Multi-line
+ * - Attribute rendering
+ * - Undo/Redo
+ * - History
+ * - Tab completion
+ * - Related keybindings
+ */
+
 struct _IrcEntry
 {
 	GtkTextView parent_instance;

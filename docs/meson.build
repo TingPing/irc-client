@@ -13,7 +13,6 @@ if get_option('with-docs')
     dependencies: libirc_dep,
     scan_args: [
       '--rebuild-types',
-      '--rebuild-sections',
       '--ignore-headers=' + ' '.join(libirc_private_headers),
     ],
     fixxref_args: [
