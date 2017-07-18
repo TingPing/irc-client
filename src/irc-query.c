@@ -131,6 +131,11 @@ irc_query_set_property (GObject *obj, guint prop_id, const GValue *val, GParamSp
 	}
 }
 
+/**
+ * irc_query_get_user:
+ *
+ * Returns: (transfer none): Returns user associated with query or %NULL
+ */
 IrcUser *
 irc_query_get_user (IrcQuery *self)
 {
