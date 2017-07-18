@@ -22,7 +22,7 @@
 
       "--env=SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
   ],
-  "cleanup": [ "/include", "/lib/pkgconfig", "*.la", "/share/gir-1.0", "/share/vala", "/share/gtk-doc/" ],
+  "cleanup": [ "/include", "/lib/pkgconfig", "*.la", "/share/gir-1.0", "/share/vala", "/share/gtk-doc" ],
   "modules": [
     {
       "name": "irc-client",
@@ -56,11 +56,40 @@
         },
         {
           "name": "gspell",
-          "config-opts": [ "--disable-gtk-doc", "--disable-gtk-doc-html" ],
+          "config-opts": [ "--disable-vala", "--disable-introspection",
+                           "--disable-gtk-doc", "--disable-gtk-doc-html" ],
           "sources": [{
             "type": "archive",
             "url": "https://download.gnome.org/sources/gspell/1.4/gspell-1.4.1.tar.xz",
             "sha256": "442f88fecd7f9e00a6a9d0af2d762744dd3c119217ff11d6739500f75b0f10be"
+          }]
+        },
+        {
+          "name": "gssdp",
+          "config-opts": ["--disable-vala", "--disable-introspection", "--disable-static"],
+          "cleanup": ["/bin"],
+          "sources": [{
+            "type": "archive",
+            "url": "https://download.gnome.org/sources/gssdp/1.0/gssdp-1.0.2.tar.xz",
+            "sha256": "a1e17c09c7e1a185b0bd84fd6ff3794045a3cd729b707c23e422ff66471535dc"
+          }]
+        },
+        {
+          "name": "gupnp",
+          "config-opts": ["--disable-vala", "--disable-introspection", "--disable-static"],
+          "sources": [{
+            "type": "archive",
+            "url": "https://download.gnome.org/sources/gupnp/1.0/gupnp-1.0.2.tar.xz",
+            "sha256": "5173fda779111c6b01cd4a5e41b594322be9d04f8c74d3361f0a0c2069c77610"
+          }]
+        },
+        {
+          "name": "gssdp-igd",
+          "config-opts": ["--disable-vala", "--disable-introspection", "--disable-static"],
+          "sources": [{
+            "type": "archive",
+            "url": "https://download.gnome.org/sources/gupnp-igd/0.2/gupnp-igd-0.2.4.tar.xz",
+            "sha256": "38c4a6d7718d17eac17df95a3a8c337677eda77e58978129ad3182d769c38e44"
           }]
         }
       ]
