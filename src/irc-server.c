@@ -274,7 +274,7 @@ inbound_privmsg (IrcServer *self, IrcMessage *msg)
 	}
 
 	const char *target_name = irc_message_get_param(msg, 0);
-	if (strchr (priv->statusmsg, target_name[0]))
+	while (*target_name && strchr (priv->statusmsg, *target_name) != NULL)
 		target_name++;
 
 	if (strchr (priv->chan_types, target_name[0]) == NULL)
@@ -2098,7 +2098,7 @@ irc_server_class_init (IrcServerClass *klass)
 										"ov", G_PARAM_READWRITE|G_PARAM_CONSTRUCT)); // RFC 1459
 	g_object_class_install_property (object_class, PROP_STATUSMSG,
 									g_param_spec_string ("statusmsg", _("STATUSMSG"), _("STATUSMSG characters"),
-										"", G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+										"@", G_PARAM_READWRITE|G_PARAM_CONSTRUCT)); // No real default but this will probably work
 	g_object_class_install_property (object_class, PROP_ENCODING,
 									g_param_spec_string ("encoding", _("Encoding"), _("Encoding for incoming and outgoing messages"),
 										"UTF-8", G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
