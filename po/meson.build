@@ -1,3 +1,3 @@
-i18n.gettext('irc-clilent',
+i18n.gettext('irc-client',
   preset: 'glib',
 )

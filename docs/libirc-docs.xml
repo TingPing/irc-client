@@ -11,25 +11,31 @@
 
   <chapter>
     <title>Irc</title>
-	<xi:include href="xml/irc-context.xml"/>
+    <xi:include href="xml/irc-channel.xml"/>
+	  <xi:include href="xml/irc-context.xml"/>
     <xi:include href="xml/irc-context-action.xml"/>
     <xi:include href="xml/irc-context-manager.xml"/>
     <xi:include href="xml/irc-server.xml"/>
-    <xi:include href="xml/irc-channel.xml"/>
     <xi:include href="xml/irc-message.xml"/>
     <xi:include href="xml/irc-query.xml"/>
     <xi:include href="xml/irc-user.xml"/>
+    <xi:include href="xml/irc-user-list.xml"/>
+    <xi:include href="xml/irc-user-list-item.xml"/>
     <xi:include href="xml/irc-utils.xml"/>
   </chapter>
 
   <chapter>
     <title>Irc Gui</title>
-	<xi:include href="xml/irc-application.xml"/>
+	  <xi:include href="xml/irc-application.xml"/>
     <xi:include href="xml/irc-chatview.xml"/>
+    <xi:include href="xml/irc-colorscheme.xml"/>
+    <xi:include href="xml/irc-cellrenderer-bubble.xml"/>
+    <xi:include href="xml/irc-chanstore.xml"/>
     <xi:include href="xml/irc-contextview.xml"/>
     <xi:include href="xml/irc-entry.xml"/>
     <xi:include href="xml/irc-entrybuffer.xml"/>
     <xi:include href="xml/irc-textview.xml"/>
+    <xi:include href="xml/irc-userlist.xml"/>
     <xi:include href="xml/irc-window.xml"/>
   </chapter>
   <index id="api-index-full">

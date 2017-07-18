@@ -1,4 +1,7 @@
-<INCLUDE>libirc.h</INCLUDE>
+<SECTION>
+<FILE>irc</FILE>
+
+</SECTION>
 
 <SECTION>
 <FILE>irc-application</FILE>
@@ -15,7 +18,6 @@ IRC_CELLRENDERER_BUBBLE
 IRC_CELLRENDERER_BUBBLE_CLASS
 IRC_CELLRENDERER_BUBBLE_GET_CLASS
 IRC_IS_CELLRENDERER_BUBBLE
-IRC_IS_CELLRENDERER_BUBBLE_CLASS
 IRC_TYPE_CELLRENDERER_BUBBLE
 IrcCellrendererBubble
 IrcCellrendererBubbleClass
@@ -27,10 +29,6 @@ irc_cellrenderer_bubble_get_type
 IRC_TYPE_CHANNEL
 IrcChannel
 irc_channel_new
-irc_channel_add_user
-irc_channel_add_users
-irc_channel_remove_user
-irc_channel_refresh_user
 irc_channel_part
 irc_channel_set_joined
 irc_channel_get_users
@@ -60,8 +58,10 @@ irc_colorscheme_get_default
 <TITLE>IrcContext</TITLE>
 IRC_TYPE_CONTEXT
 IrcContextInterface
+irc_context_run_command
+irc_context_print
+irc_context_print_with_time
 irc_context_get_id
-irc_context_get_name
 irc_context_get_menu
 irc_context_remove_child
 irc_context_lookup_setting_boolean
@@ -87,6 +87,7 @@ irc_context_manager_remove
 irc_context_manager_remove_by_id
 irc_context_manager_set_front_context
 irc_context_manager_get_front_context
+irc_context_manager_foreach_parent
 IrcContextManager
 </SECTION>
 
@@ -112,22 +113,33 @@ irc_entrybuffer_new
 irc_entrybuffer_push_into_history
 irc_entrybuffer_history_up
 irc_entrybuffer_history_down
+irc_entrybuffer_tab_complete
+irc_entrybuffer_set_completion_model
 IrcEntrybuffer
 </SECTION>
 
 <SECTION>
-<FILE>irc-enumtypes</FILE>
-IRC_TYPE_SERVER_CAP
-IRC_TYPE_ATTRIBUTE
+<FILE>irc-identd-service</FILE>
+IrcIdentdService
+irc_identd_service_get_default
+irc_identd_service_add_user
+irc_identd_service_add_address
 </SECTION>
 
 <SECTION>
 <FILE>irc-message</FILE>
-IRC_TYPE_MESSAGE
 irc_message_new
 irc_message_copy
 irc_message_free
+irc_message_get_param
+irc_message_get_word_eol
+irc_message_get_tags
+irc_message_has_tag
+irc_message_get_tag_value
+<SUBSECTION Standard>
+IRC_TYPE_MESSAGE
 IrcMessage
+irc_message_get_type
 </SECTION>
 
 <SECTION>
@@ -149,6 +161,7 @@ IrcPreferencesWindow
 IRC_TYPE_QUERY
 irc_query_new
 irc_query_set_online
+irc_query_get_user
 IrcQuery
 </SECTION>
 
@@ -157,21 +170,32 @@ IrcQuery
 IRC_TYPE_SERVER
 IrcServerCap
 irc_server_new_from_network
+irc_server_get_me
 irc_server_connect
 irc_server_disconnect
 irc_server_flushq
 irc_server_get_is_connected
 irc_server_write_line
+irc_server_str_equal
 irc_server_write_linef
 irc_server_get_action_group
 IrcServer
+IrcServerClass
+</SECTION>
+
+<SECTION>
+<FILE>irc-text-common</FILE>
+apply_irc_tags
 </SECTION>
 
 <SECTION>
 <FILE>irc-textview</FILE>
+<TITLE>IrcTextview</TITLE>
 IRC_TYPE_TEXTVIEW
+IrcTextviewClass
 irc_textview_new
 irc_textview_append_text
+irc_textview_set_search
 IrcTextview
 </SECTION>
 
@@ -180,6 +204,26 @@ IrcTextview
 IRC_TYPE_USER
 IrcUser
 irc_user_new
+</SECTION>
+
+<SECTION>
+<FILE>irc-user-list</FILE>
+IRC_TYPE_USER_LIST
+irc_user_list_new
+irc_user_list_add
+irc_user_list_clear
+irc_user_list_remove
+irc_user_list_contains
+irc_user_list_get_users_prefix
+irc_user_list_set_users_prefix
+IrcUserList
+</SECTION>
+
+<SECTION>
+<FILE>irc-user-list-item</FILE>
+IRC_TYPE_USER_LIST_ITEM
+IrcUserListItem
+irc_user_list_item_new
 </SECTION>
 
 <SECTION>
@@ -200,10 +244,12 @@ irc_str_hash
 irc_strip_attributes
 irc_str_cmp
 irc_str_equal
+irc_str_has_prefix
 irc_tolower
 irc_strcasestr
 irc_sasl_encode_plain
 irc_strv_append
+irc_convert_invalid_text
 </SECTION>
 
 <SECTION>
