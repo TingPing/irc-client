@@ -42,6 +42,14 @@
 			<summary>Use a secure connection</summary>
 			<default>true</default>
 		</key>
+		<key name="port" type="q">
+			<summary>Port to use (0 means automatic for TLS)</summary>
+			<default>0</default>
+		</key>
+		<key name="sts-expiration" type="x">
+			<summary>Timestamp of sts expiration</summary>
+			<default>0</default>
+		</key>
 		<key name="nickname" type="s">
 			<default>""</default>
 		</key>

@@ -67,6 +67,7 @@ typedef struct
 
 	// CAP negotiation...
 	char *sasl_mech;
+	gint64 sts_duration;
 	gboolean sent_capend;
 	gboolean waiting_on_cap;
 	gboolean waiting_on_sasl;
@@ -887,6 +888,88 @@ inbound_authenticate (IrcServer *self, IrcMessage *msg)
 	}
 }
 
+static GHashTable *
+extract_cap_values (const char *cap)
+{
+	if (cap == NULL)
+		return NULL;
+
+	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+	g_auto(GStrv) split = g_strsplit (cap, ",", -1);
+	for (gsize i = 0; split[i]; ++i)
+	{
+		char *value = strchr (split[i], '=');
+		char *key = split[i];
+		if (value != NULL)
+		{
+			key = g_strndup (key, (gsize)(value - key));
+			value++;
+		}
+		else
+		{
+			key = g_strdup (key);
+		}
+
+		g_hash_table_insert (ret, key, g_strdup(value));
+	}
+
+	return ret;
+}
+
+static guint16
+str_to_port (const char *port_str)
+{
+	if (port_str == NULL)
+		return 0;
+
+	guint64 ret =  g_ascii_strtoull (port_str, NULL, 0);
+	if (ret > G_MAXINT16)
+		return 0;
+	return (guint16)ret;
+}
+
+static gint64
+str_to_duration (const char *duration_str)
+{
+	if (duration_str == NULL)
+		return -1;
+
+	if (!strcmp (duration_str, "0"))
+		return 0;
+
+	gint64 ret =  g_ascii_strtoll (duration_str, NULL, 0);
+	if (ret <= 0)
+		return -1;
+	return ret;
+}
+
+static void
+update_sts_expiration (IrcServer *self)
+{
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+
+	if (priv->sts_duration == 0)
+		g_settings_set_int64 (priv->settings, "sts-expiration", 0);
+	else if (priv->sts_duration > 0)
+	{
+		gint64 expiration = g_get_real_time () + priv->sts_duration;
+		if (expiration > 0)
+			g_settings_set_int64 (priv->settings, "sts-expiration", expiration);
+	}
+}
+
+static gboolean
+check_sts_enforcement (IrcServer *self)
+{
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	gint64 expiration = g_settings_get_int64 (priv->settings, "sts-expiration");
+	if (expiration == 0)
+		return FALSE;
+
+	return expiration >= g_get_real_time ();
+}
+
 struct SupportedCap
 {
 	const char *name;
@@ -908,6 +991,7 @@ const struct SupportedCap supported_caps[] =
 	{ "znc.in/self-message", IRC_SERVER_CAP_ZNC_SELF_MESSAGE },
 	{ "twitch.tv/membership", IRC_SERVER_CAP_TWITCH_MEMBERSHIP },
 	{ "twitch.tv/tags", IRC_SERVER_CAP_TWITCH_TAGS },
+	{ "draft/sts", 0 }, // 0 since it isn't an active capability
 };
 
 static void
@@ -967,6 +1051,40 @@ inbound_cap (IrcServer *self, IrcMessage *msg)
 					g_strlcat (outbuf, "sasl ", sizeof (outbuf));
 				}
 
+				continue;
+			}
+			// You don't actually request `sts`
+			else if (ascii_str_equal (cap, "draft/sts"))
+			{
+				g_autoptr(GHashTable) cap_values = extract_cap_values (value);
+				if (cap_values == NULL)
+					goto sts_error;
+
+				// Not a secure port, try to upgrade
+				if (!g_socket_client_get_tls (priv->socket))
+				{
+					const guint16 port = str_to_port (g_hash_table_lookup (cap_values, "port"));
+					if (port == 0)
+						goto sts_error;
+
+					g_object_set (self, "port", port, "tls", TRUE, NULL);
+					irc_server_connect (self);
+					return;
+				}
+				else
+				{
+					priv->sts_duration = str_to_duration (g_hash_table_lookup (cap_values, "duration"));
+					if (priv->sts_duration < 0)
+						goto sts_error;
+
+					g_settings_set (priv->settings, "port", "q", priv->port);
+					g_settings_set_boolean (priv->settings, "tls", TRUE);
+					update_sts_expiration (self);
+				}
+
+				continue;
+sts_error:
+				g_warning ("Recieved invalid sts cap");
 				continue;
 			}
 
@@ -1416,9 +1534,10 @@ on_readline_ready (GObject *source, GAsyncResult *res, gpointer data)
 	input = g_data_input_stream_read_line_finish (in_stream, res, &len, &err);
 	if (err != NULL)
 	{
-		g_warning ("Reading error: %s", err->message);
+		g_warning ("Reading error: %s (%d)", err->message, err->code);
+		if (err->code != G_IO_ERROR_CLOSED)
+			irc_server_disconnect (server);
 		g_clear_error (&err);
-		irc_server_disconnect (server);
 		return;
 	}
 	else if (input == NULL)
@@ -1499,14 +1618,22 @@ irc_server_connect (IrcServer *self)
 {
   	g_return_if_fail (IRC_IS_SERVER(self));
 
-	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	const gboolean tls = g_socket_client_get_tls (priv->socket);
+	irc_server_disconnect (self); // Clean up any previous state
 
-	irc_server_disconnect (self);
+	IrcServerPrivate *priv = irc_server_get_instance_private (self);
+	gboolean tls = g_socket_client_get_tls (priv->socket);
+	if (!tls && check_sts_enforcement (self))
+	{
+		g_info ("STS enabled, forcing TLS");
+		tls = TRUE;
+		g_socket_client_set_tls (priv->socket, TRUE);
+	}
+	const guint16 port = priv->port ? priv->port : tls ? 6697 : 6667;
 
 	g_autofree char *uri = g_strdup_printf ("%s://%s", tls ? "ircs" : "irc", priv->host);
 	priv->connect_cancel = g_cancellable_new ();
-	g_socket_client_connect_to_uri_async (priv->socket, uri, tls ? 6697 : 6667, priv->connect_cancel, connect_ready, self);
+	g_info ("Connecting to %s:%" G_GUINT16_FORMAT, uri, port);
+	g_socket_client_connect_to_uri_async (priv->socket, uri, port, priv->connect_cancel, connect_ready, self);
 }
 
 static void
@@ -1530,6 +1657,7 @@ irc_server_disconnect (IrcServer *self)
 
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
 
+	g_debug ("Disconnecting");
 	if (priv->connect_cancel)
 	{
 		g_cancellable_cancel (priv->connect_cancel);
@@ -1561,6 +1689,8 @@ irc_server_disconnect (IrcServer *self)
 	g_assert (g_hash_table_size (priv->usertable) == 0); // Nothing should be left
 
 	// Reset CAP state
+	update_sts_expiration (self);
+	priv->sts_duration = -1;
 	g_free (priv->sasl_mech);
 	priv->sasl_mech = g_strdup ("PLAIN");
 	priv->have_cert = FALSE;
@@ -1730,10 +1860,12 @@ irc_server_new_from_network (const char *network_name)
 	g_autofree char *path = g_strconcat ("/se/tingping/IrcClient/", network_name, "/", NULL);
 	g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.network", path);
 	g_autofree char *host = g_settings_get_string (settings, "hostname");
+	guint16 port;
 	g_autofree char *encoding = g_settings_get_string (settings, "encoding");
 	gboolean tls = g_settings_get_boolean (settings, "tls");
+	g_settings_get (settings, "port", "q", &port);
 
-	return g_object_new (IRC_TYPE_SERVER, "host", host, "tls", tls,
+	return g_object_new (IRC_TYPE_SERVER, "host", host, "tls", tls, "port", port,
 								"encoding", encoding, "name", network_name, NULL);
 }
 
@@ -2009,6 +2141,7 @@ irc_server_init (IrcServer *self)
 	priv->casemapping = g_strdup ("rfc1459");
 
 	priv->sasl_mech = g_strdup ("PLAIN");
+	priv->sts_duration = -1;
 
 	priv->socket = g_socket_client_new ();
   	g_socket_client_set_timeout (priv->socket, 180);
