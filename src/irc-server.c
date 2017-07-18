@@ -924,7 +924,7 @@ str_to_port (const char *port_str)
 		return 0;
 
 	guint64 ret =  g_ascii_strtoull (port_str, NULL, 0);
-	if (ret > G_MAXINT16)
+	if (ret > G_MAXUINT16)
 		return 0;
 	return (guint16)ret;
 }
