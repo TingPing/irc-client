@@ -77,6 +77,7 @@
         {
           "name": "gupnp",
           "config-opts": ["--disable-vala", "--disable-introspection", "--disable-static"],
+          "cleanup": ["/bin"],
           "sources": [{
             "type": "archive",
             "url": "https://download.gnome.org/sources/gupnp/1.0/gupnp-1.0.2.tar.xz",
