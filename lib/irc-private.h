@@ -1,4 +1,4 @@
-/* irc.h
+/* irc-private.h
  *
  * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
  *
@@ -18,21 +18,6 @@
 
 #pragma once
 
-#include "irc-channel.h"
-#include "irc-context-action.h"
-#include "irc-context-manager.h"
 #include "irc-context.h"
-#include "irc-message.h"
-#include "irc-query.h"
-#include "irc-server.h"
-#include "irc-user.h"
-#include "irc-utils.h"
 
-#include "irc-application.h"
-#include "irc-chatview.h"
-#include "irc-contextview.h"
-#include "irc-entry.h"
-#include "irc-entrybuffer.h"
-#include "irc-textview.h"
-#include "irc-userlist.h"
-#include "irc-window.h"
+gboolean handle_command (IrcContext *ctx, const GStrv, const GStrv);

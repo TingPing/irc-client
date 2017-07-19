@@ -72,6 +72,7 @@ libgspell_dep = dependency('gspell-1', version: '>= 1.3.0')
 libgtksource_dep = dependency('gtksourceview-3.0')
 libgupnp_igd_dep = dependency('gupnp-igd-1.0')
 
+subdir('lib')
 subdir('src')
 subdir('plugins')
 subdir('tests')

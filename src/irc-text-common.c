@@ -112,13 +112,13 @@ extract_hex_colors (GtkTextIter *it, char *fgcolor, char *bgcolor)
 	char *p = text;
 	gsize len = strlen (text);
 
-	if (_irc_util_is_valid_hex_color (text, MIN(6, len)))
+	if (irc_util_is_valid_hex_color (text, MIN(6, len)))
 	{
 		strncpy (fgcolor, text, 6);
 		len -= 6;
 		p += 6;
 	}
-	if (*p == ',' && _irc_util_is_valid_hex_color (p + 1, MIN(6, len - 1)))
+	if (*p == ',' && irc_util_is_valid_hex_color (p + 1, MIN(6, len - 1)))
 	{
 		strncpy (bgcolor, p + 1, 6);
 		p += 7;

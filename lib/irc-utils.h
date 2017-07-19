@@ -93,4 +93,5 @@ char *irc_strcasestr (const char *haystack, const char *needle) G_GNUC_PURE NON_
 char *irc_sasl_encode_plain (const char *username, const char *password) NON_NULL();
 GStrv irc_strv_append (GStrv array, const char *str) G_GNUC_PURE;
 char *irc_convert_invalid_text (const char *text, gssize len, GIConv converter, const char *fallback_char) G_GNUC_PURE NON_NULL();
+gboolean irc_util_is_valid_hex_color (const char *str, const gsize len);
 

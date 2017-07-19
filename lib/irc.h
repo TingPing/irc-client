@@ -1,4 +1,4 @@
-/* irc-private.h
+/* irc.h
  *
  * Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
  *
@@ -18,7 +18,13 @@
 
 #pragma once
 
+#include "irc-channel.h"
+#include "irc-context-action.h"
+#include "irc-context-manager.h"
 #include "irc-context.h"
+#include "irc-message.h"
+#include "irc-query.h"
+#include "irc-server.h"
+#include "irc-user.h"
+#include "irc-utils.h"
 
-gboolean handle_command (IrcContext *ctx, const GStrv, const GStrv);
-gboolean _irc_util_is_valid_hex_color (const char *str, const gsize len);

@@ -33,7 +33,8 @@ test('Test Irc utils', test_irc_utils,
   env: test_env
 )
 
+if false
 executable('test-irc-textview', 'test-irc-textview.c',
   dependencies: test_dependencies
 )
-
+endif

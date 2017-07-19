@@ -8,7 +8,7 @@ if get_option('with-docs')
 
   gnome.gtkdoc('libirc',
     main_sgml: 'libirc-docs.xml',
-    src_dir: meson.source_root() + '/src',
+    src_dir: meson.source_root() + '/lib',
     gobject_typesfile: 'libirc.types',
     dependencies: libirc_dep,
     scan_args: [
@@ -19,8 +19,6 @@ if get_option('with-docs')
       '--html-dir=' + docpath,
       '--extra-dir=' + join_paths(glib_docpath, 'glib'),
       '--extra-dir=' + join_paths(glib_docpath, 'gobject'),
-      '--extra-dir=' + join_paths(glib_docpath, 'gtk3'),
-      '--extra-dir=' + join_paths(glib_docpath, 'gtksourceview-3.0'),
     ],
     install: true
   )

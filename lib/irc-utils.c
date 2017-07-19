@@ -23,7 +23,7 @@
 #include "irc-private.h"
 
 gboolean
-_irc_util_is_valid_hex_color (const char *str, const gsize len)
+irc_util_is_valid_hex_color (const char *str, const gsize len)
 {
 	if (len < 6)
 		return FALSE;
@@ -67,8 +67,8 @@ irc_strip_attributes (const char *str)
 				parsing_bg = TRUE;
 			}
 		}
-		else if (parsing_hexcolor == TRUE && (_irc_util_is_valid_hex_color (str, len) ||
-										      (*str == ',' && _irc_util_is_valid_hex_color (str + 1, len - 1))))
+		else if (parsing_hexcolor == TRUE && (irc_util_is_valid_hex_color (str, len) ||
+										      (*str == ',' && irc_util_is_valid_hex_color (str + 1, len - 1))))
 		{
 			if (*str == ',')
 			{
