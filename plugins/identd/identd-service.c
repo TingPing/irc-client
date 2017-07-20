@@ -1,4 +1,4 @@
-/* irc-identd-service.c
+/* -identd-service.c
  *
  * Copyright (C) 2017 Patrick Griffis <tingping@tingping.se>
  *
@@ -19,11 +19,11 @@
 #include <string.h>
 #include <gio/gio.h>
 #include <libgupnp-igd/gupnp-simple-igd.h>
-#include "irc-identd-service.h"
+#include "identd-service.h"
 
 typedef struct
 {
-	IrcIdentdService *service;
+	IdentdService *service;
 	GSocketConnection *conn;
 	gchar *username;
 } ident_info;
@@ -34,7 +34,7 @@ typedef struct
 	guint16 port;
 } callback_tuple;
 
-struct IrcIdentdService {
+struct IdentdService {
 	GSocketService *service;
 	GUPnPSimpleIgd *upnp;
 	GHashTable *responses;
@@ -87,7 +87,7 @@ identd_cleanup_response_cb (gpointer userdata)
 }
 
 void
-irc_identd_service_add_user (IrcIdentdService *service, const char *username, const guint16 port)
+identd_service_add_user (IdentdService *service, const char *username, const guint16 port)
 {
 	g_return_if_fail (username != NULL);
 	g_return_if_fail (port != 0);
@@ -104,13 +104,13 @@ irc_identd_service_add_user (IrcIdentdService *service, const char *username, co
 }
 
 void
-irc_identd_service_add_address (IrcIdentdService *service, const char *address)
+identd_service_add_address (IdentdService *service, const char *address)
 {
 	g_return_if_fail (service != NULL);
 	g_return_if_fail (address != NULL);
 
 	// Would set a short lease but my router only supports permanent leases...
-	gupnp_simple_igd_add_port (service->upnp, "TCP", 113, address, service->port, 0, "Identd server for IRC Client");
+	gupnp_simple_igd_add_port (service->upnp, "TCP", 113, address, service->port, 0, "Identd server for  Client");
 }
 
 static void
@@ -196,7 +196,7 @@ static gboolean
 identd_incoming_cb (GSocketService *service, GSocketConnection *conn,
 					GObject *source, gpointer userdata)
 {
-	IrcIdentdService *identd = userdata;
+	IdentdService *identd = userdata;
 	GDataInputStream *data_stream;
 	GInputStream *stream;
 	ident_info *info;
@@ -232,9 +232,8 @@ error_mapping_port_cb (GUPnPSimpleIgd *self, GError *error, char *proto, guint e
 	g_warning ("identd: Error mapping port: %s", error->message);
 }
 
-#if 0
 void
-irc_identd_service_destroy (IrcIdentdService *service)
+identd_service_destroy (IdentdService *service)
 {
 	g_return_if_fail (service != NULL);
 
@@ -245,10 +244,9 @@ irc_identd_service_destroy (IrcIdentdService *service)
 	g_hash_table_unref (service->responses);
 	g_free (service);
 }
-#endif
 
-static IrcIdentdService *
-irc_identd_service_new (void)
+IdentdService *
+identd_service_new (void)
 {
 	GError *error = NULL;
 	GSocketService *service = g_socket_service_new ();
@@ -264,7 +262,7 @@ irc_identd_service_new (void)
 	}
 	g_info ("identd: Listening on port: %" G_GUINT16_FORMAT, listen_port);
 
-	IrcIdentdService *identd = g_new (IrcIdentdService, 1);
+	IdentdService *identd = g_new (IdentdService, 1);
 	identd->service = service;
 	identd->responses = g_hash_table_new_full (NULL, NULL, NULL, g_free);
 	identd->upnp = gupnp_simple_igd_new ();
@@ -277,15 +275,4 @@ irc_identd_service_new (void)
 	g_socket_service_start (service);
 
 	return identd;
-}
-
-IrcIdentdService *
-irc_identd_service_get_default (void)
-{
-	static IrcIdentdService *service;
-
-	if (G_UNLIKELY(service == NULL))
-		service = irc_identd_service_new ();
-
-	return service;
 }

@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-struct IrcIdentdService;
-typedef struct IrcIdentdService IrcIdentdService;
+struct IdentdService;
+typedef struct IdentdService IdentdService;
 
-IrcIdentdService *irc_identd_service_get_default (void);
-void irc_identd_service_add_user (IrcIdentdService *service, const char *username, guint16 port);
-void irc_identd_service_add_address (IrcIdentdService *service, const char *address);
-
+IdentdService *identd_service_new (void);
+void identd_service_add_user (IdentdService *service, const char *username, guint16 port);
+void identd_service_add_address (IdentdService *service, const char *address);
+void identd_service_destroy (IdentdService *service);

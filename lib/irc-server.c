@@ -31,7 +31,6 @@
 #include "irc-utils.h"
 #include "irc-enumtypes.h"
 #include "irc-marshal.h"
-#include "irc-identd-service.h"
 
 struct _IrcServerClass
 {
@@ -1807,33 +1806,8 @@ on_socket_client_event (GSocketClient *client, GSocketClientEvent  event, GSocke
 {
 	IrcServer *self = user_data;
 	IrcServerPrivate *priv = irc_server_get_instance_private (self);
-	IrcIdentdService *identd;
 
-	if (event == G_SOCKET_CLIENT_CONNECTED)
-	{
-		if (!(identd = irc_identd_service_get_default ()))
-			return;
-
-		g_autoptr(GError) err = NULL;
-		g_autoptr(GInetSocketAddress) addr = G_INET_SOCKET_ADDRESS(
-		                                     g_socket_connection_get_local_address (G_SOCKET_CONNECTION(connection), &err));
-		if (err != NULL)
-		{
-			g_warning ("Failed to get local address of connection: %s", err->message);
-			return;
-		}
-
-		GInetAddress *inet_addr = g_inet_socket_address_get_address (addr);
-		g_autofree char *addr_str = g_inet_address_to_string (inet_addr);
-
-		irc_identd_service_add_address (identd, addr_str);
-
-		g_autofree char *username = g_settings_get_string (priv->settings, "server-username");
-		guint16 local_port = g_inet_socket_address_get_port (addr);
-
-		irc_identd_service_add_user (identd, username, local_port);
-	}
-	else if (event == G_SOCKET_CLIENT_TLS_HANDSHAKING)
+	if (event == G_SOCKET_CLIENT_TLS_HANDSHAKING)
 	{
 		GTlsCertificate *cert;
 		g_autofree char *network_file = g_strconcat (priv->network_name, ".pem", NULL);
@@ -1908,6 +1882,7 @@ enum {
 	PROP_SOCKET,
 	PROP_CONN,
 	PROP_STATUSMSG,
+	PROP_SETTINGS,
   	N_PROPS,
 };
 
@@ -1963,6 +1938,9 @@ irc_server_get_property (GObject    *object,
 		break;
 	case PROP_SOCKET:
 		g_value_set_object (value, priv->socket);
+		break;
+	case PROP_SETTINGS:
+		g_value_set_object (value, priv->settings);
 		break;
 	case PROP_CONN:
 		g_value_set_object (value, priv->conn);
@@ -2111,6 +2089,9 @@ irc_server_class_init (IrcServerClass *klass)
   	g_object_class_install_property (object_class, PROP_CONN,
 									g_param_spec_object ("connection", _("Connection"), _("GSocketConnection for the server"),
 										G_TYPE_SOCKET_CONNECTION, G_PARAM_READABLE));
+	g_object_class_install_property (object_class, PROP_SETTINGS,
+									g_param_spec_object ("settings", _("Settings"), _("Settings for the server"),
+										G_TYPE_SETTINGS, G_PARAM_READABLE));
 	// modes
 
 

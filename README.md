@@ -17,19 +17,20 @@ everything yet. (Also yes win32 support will come eventually)
 ### Build-only deps
 
 - meson
-- gtk-doc
-- vala
-- python-gobject
+- gtk-doc (optional for developers)
+- vala (optional for bindings)
+- python-gobject (optional for bindings)
 
 ### Runtime deps
 
 - gtk3
 - gtksourceview3
-- glib-networking
-- gupnp-igd
 - libnotify
 - gspell
 - libpeas
+- glib-networking (optional for TLS)
+- gupnp-igd (optional for identd)
+
 
 ```sh
 meson build && cd build

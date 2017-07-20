@@ -1,0 +1,6 @@
+[Plugin]
+Module=identd
+Name=Identd
+Description=Implements an identd server
+Authors=Patrick Griffis
+Copyright=© 2017 Patrick Griffis

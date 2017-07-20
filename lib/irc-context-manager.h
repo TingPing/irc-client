@@ -34,7 +34,6 @@ void irc_context_manager_remove (IrcContextManager *self, IrcContext *ctx) NON_N
 void irc_context_manager_remove_by_id (IrcContextManager *self, const char *id) NON_NULL();
 void irc_context_manager_set_front_context (IrcContextManager *self, IrcContext *front) NON_NULL();
 IrcContext *irc_context_manager_get_front_context (IrcContextManager *self) NON_NULL();
-void irc_context_manager_foreach_parent (IrcContextManager *self, GNodeForeachFunc func, gpointer data) NON_NULL();
+void irc_context_manager_foreach_parent (IrcContextManager *self, GNodeForeachFunc func, gpointer data) NON_NULL(1, 2);
 
 G_END_DECLS
-
