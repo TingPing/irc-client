@@ -6,8 +6,6 @@ config_h.set_quoted('G_LOG_DOMAIN', 'Irc')
 config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('localedir')))
 config_h.set_quoted('LIBDIR', join_paths(get_option('prefix'), get_option('libdir')))
 config_h.set10('ENABLE_NLS', true)
-config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'),
-                                 get_option('datadir'), 'locale'))
 config_h.set('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_52')
 config_h.set('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_2_52')
 config_h.set('GDK_VERSION_MIN_REQUIRED', 'GDK_VERSION_3_22')
