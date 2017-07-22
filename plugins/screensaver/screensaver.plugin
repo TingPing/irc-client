@@ -1,7 +1,6 @@
 [Plugin]
-Module=Screensaver
-Loader=python3
+Module=screensaver
 Name=Screensaver
 Description=Automatically marks away on screensaver
 Authors=TingPing
-Copyright=© 2015 TingPing
+Copyright=© 2017 TingPing
