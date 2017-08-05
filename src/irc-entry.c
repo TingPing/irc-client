@@ -201,6 +201,7 @@ irc_entry_init (IrcEntry *self)
 	const char * const hexcolor_accels[] = { "<Primary><Shift>k", NULL };
 	const char * const reset_accels[] = { "<Primary>o", NULL };
 	const char * const reverse_accels[] = { "<Primary>r", NULL };
+	const char * const strikethrough_accels[] = { "<Primary>s", NULL };
 
 	g_action_map_add_action_entries (G_ACTION_MAP (group), actions, G_N_ELEMENTS(actions), self);
 	gtk_widget_insert_action_group (GTK_WIDGET(self), "entry", G_ACTION_GROUP(group));
@@ -221,4 +222,5 @@ irc_entry_init (IrcEntry *self)
 	gtk_application_set_accels_for_action (app, "entry.insert_character('\x0F')", reset_accels );
 	gtk_application_set_accels_for_action (app, "entry.insert_character('\x1D')", italics_accels );
 	gtk_application_set_accels_for_action (app, "entry.insert_character('\x16')", reverse_accels );
+	gtk_application_set_accels_for_action (app, "entry.insert_character('\x1E')", strikethrough_accels );
 }

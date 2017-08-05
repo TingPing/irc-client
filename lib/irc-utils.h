@@ -66,6 +66,7 @@
  * @REVERSE: Reverses normal colors
  * @CTCP: Surrounds CTCP messages
  * @HEXCOLOR: Starts a color in hex format
+ * @STRIKETHROUGH: Toggles strikethrough
  *
  * Characters for IRC attributes.
  */
@@ -80,6 +81,7 @@ typedef enum {
 	REVERSE = '\026',
 	CTCP = '\001',
 	HEXCOLOR = '\004',
+	STRIKETHROUGH = '\036',
 } IrcAttribute;
 
 gboolean irc_isattr (guchar c) G_GNUC_CONST;
