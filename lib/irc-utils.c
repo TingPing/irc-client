@@ -102,6 +102,7 @@ irc_strip_attributes (const char *str)
 			case UNDERLINE:
 			case ITALIC:
 			case STRIKETHROUGH:
+			case MONOSPACE:
 				break;
 			default:
 				*dst++ = *str;
@@ -135,6 +136,7 @@ irc_isattr (guchar c)
 		case UNDERLINE:
 		case ITALIC:
 		case STRIKETHROUGH:
+		case MONOSPACE:
 			return TRUE;
 		default:
 			return FALSE;

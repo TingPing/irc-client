@@ -134,8 +134,10 @@ void
 apply_irc_tags (GtkTextBuffer *buf, const GtkTextIter *start, const GtkTextIter *end, gboolean clear)
 {
 	char fgcol[3] = { 0 }, bgcol[3] = { 0 }, hexfgcol[7] = { 0 }, hexbgcol[7] = { 0 };
-	GtkTextIter bold_start, italic_start, underline_start, color_start, hexcolor_start, hidden_start, strikethrough_start;
-	gboolean bold = FALSE, italic = FALSE, underline = FALSE, color = FALSE, hexcolor = FALSE, hidden = FALSE, strikethrough = FALSE;
+	GtkTextIter bold_start, italic_start, underline_start, color_start, hexcolor_start,
+	            hidden_start, strikethrough_start, monospace_start;
+	gboolean bold = FALSE, italic = FALSE, underline = FALSE, color = FALSE, hexcolor = FALSE,
+	         hidden = FALSE, strikethrough = FALSE, monospace = FALSE;
 	GtkTextIter cur_iter = *start;
 
 #define STOP_COLOR G_STMT_START \
@@ -221,6 +223,7 @@ G_STMT_END
 			APPLY(italic);
 			APPLY(underline);
 			APPLY(strikethrough);
+			APPLY(monospace);
 			continue;
 		case ITALIC:
 			APPLY_HIDDEN;
@@ -241,6 +244,11 @@ G_STMT_END
 			APPLY_HIDDEN;
 			STOP_COLOR;
 			START_OR_APPLY(strikethrough);
+			continue;
+		case MONOSPACE:
+			APPLY_HIDDEN;
+			STOP_COLOR;
+			START_OR_APPLY(monospace);
 			continue;
 		case HIDDEN:
 			APPLY_HIDDEN;
@@ -278,4 +286,5 @@ G_STMT_END
 	APPLY(underline);
 	APPLY(hidden);
 	APPLY(strikethrough);
+	APPLY(monospace);
 }

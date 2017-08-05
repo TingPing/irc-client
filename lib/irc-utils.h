@@ -67,6 +67,7 @@
  * @CTCP: Surrounds CTCP messages
  * @HEXCOLOR: Starts a color in hex format
  * @STRIKETHROUGH: Toggles strikethrough
+ * @MONOSPACE: Toggles monospace text
  *
  * Characters for IRC attributes.
  */
@@ -82,6 +83,7 @@ typedef enum {
 	CTCP = '\x01',
 	HEXCOLOR = '\x04',
 	STRIKETHROUGH = '\x1E',
+	MONOSPACE = '\x11',
 } IrcAttribute;
 
 gboolean irc_isattr (guchar c) G_GNUC_CONST;

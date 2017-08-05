@@ -81,6 +81,11 @@ irc_colorscheme_new (void)
 	g_object_set (tag, "strikethrough", TRUE, NULL);
 	gtk_text_tag_table_add (table, tag);
 
+	tag = gtk_text_tag_new ("monospace");
+	g_object_set (tag, "family", "Monospace", NULL);
+	gtk_text_tag_table_add (table, tag);
+
+
 	tag = gtk_text_tag_new ("hidden");
 	g_object_set (tag, "invisible", TRUE, NULL);
 	gtk_text_tag_table_add (table, tag);
