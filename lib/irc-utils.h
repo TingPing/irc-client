@@ -71,17 +71,17 @@
  * Characters for IRC attributes.
  */
 typedef enum {
-	BOLD = '\002',
-	ITALIC = '\035',
-	COLOR = '\003',
-	UNDERLINE = '\037',
-	RESET = '\017',
+	BOLD = '\x02',
+	ITALIC = '\x1D',
+	COLOR = '\x03',
+	UNDERLINE = '\x1F',
+	RESET = '\x0F',
 	HIDDEN = '\010',
-	BEEP = '\007',
-	REVERSE = '\026',
-	CTCP = '\001',
-	HEXCOLOR = '\004',
-	STRIKETHROUGH = '\036',
+	BEEP = '\x07',
+	REVERSE = '\x16',
+	CTCP = '\x01',
+	HEXCOLOR = '\x04',
+	STRIKETHROUGH = '\x1E',
 } IrcAttribute;
 
 gboolean irc_isattr (guchar c) G_GNUC_CONST;
