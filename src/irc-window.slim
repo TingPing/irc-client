@@ -1,0 +1,170 @@
+doctype xml
+interface
+  requires lib='gtk+' version='3.22'
+  template class='IrcWindow' parent='GtkApplicationWindow'
+    property name='can-focus' false
+    property name='default-width' 900
+    property name='default-height' 600
+    child
+      object class='GtkBox'
+        property name='visible' true
+        property name='can-focus' false
+        property name='orientation' vertical
+        child
+          object class='GtkPaned' id='paned'
+            property name='visible' true
+            property name='can-focus' true
+            property name='position' 150
+            property name='position-set' true
+            child
+              object class='GtkScrolledWindow' id='sw_cv'
+                property name='visible' true
+                property name='can-focus' true
+                property name='hscrollbar-policy' never
+              packing
+                property name='resize' false
+                property name='shrink' false
+            child
+              object class='GtkOverlay'
+                property name='visible' true
+                property name='can-focus' false
+                child
+                  object class='GtkStack' id='viewstack'
+                    property name='visible' true
+                    property name='can-focus' false
+                    child
+                child type='overlay'
+                  object class='GtkRevealer' id='search_revealer'
+                    property name='visible' true
+                    property name='can-focus' false
+                    property name='halign' end
+                    property name='valign' start
+                    property name='margin-right' 10
+                    child
+                      object class='GtkFrame'
+                        property name='visible' true
+                        property name='can-focus' false
+                        property name='label-xalign' 0
+                        property name='shadow-type' none
+                        child
+                          object class='GtkAlignment'
+                            property name='visible' true
+                            property name='can-focus' false
+                            property name='left-padding' 12
+                            child
+                              object class='GtkBox'
+                                property name='visible' true
+                                property name='can-focus' false
+                                child
+                                  object class='GtkSearchEntry' id='search_entry'
+                                    property name='visible' true
+                                    property name='can-focus' true
+                                    property name='primary-icon-name' edit-find-symbolic
+                                    property name='primary-icon-activatable' false
+                                    property name='primary-icon-sensitive' false
+                                    signal name='next-match' handler='on_search_next' object='IrcWindow' swapped='no'
+                                    signal name='previous-match' handler='on_search_previous' object='IrcWindow' swapped='no'
+                                    signal name='search-changed' handler='on_search_changed' object='IrcWindow' swapped='no'
+                                  packing
+                                    property name='expand' false
+                                    property name='fill' true
+                                    property name='position' 0
+                                child
+                                  object class='GtkButton'
+                                    property name='visible' true
+                                    property name='can-focus' true
+                                    property name='receives-default' true
+                                    signal name='clicked' handler='on_search_previous' object='IrcWindow' swapped='no'
+                                    child
+                                      object class='GtkImage'
+                                        property name='visible' true
+                                        property name='can-focus' false
+                                        property name='icon-name' go-up-symbolic
+                                  packing
+                                    property name='expand' false
+                                    property name='fill' true
+                                    property name='position' 1
+                                child
+                                  object class='GtkButton'
+                                    property name='visible' true
+                                    property name='can-focus' true
+                                    property name='receives-default' true
+                                    signal name='clicked' handler='on_search_next' object='IrcWindow' swapped='no'
+                                    child
+                                      object class='GtkImage'
+                                        property name='visible' true
+                                        property name='can-focus' false
+                                        property name='icon-name' go-down-symbolic
+                                  packing
+                                    property name='expand' false
+                                    property name='fill' true
+                                    property name='position' 2
+                                style
+                                  class name='linked'
+                        child type='label-item'
+                        style
+                          class name='irc-entry-frame'
+              packing
+                property name='resize' true
+                property name='shrink' true
+          packing
+            property name='expand' true
+            property name='fill' true
+            property name='position' 0
+        child
+          object class='GtkFrame' id='entry_frame'
+            property name='visible' true
+            property name='can-focus' false
+            property name='label-xalign' 0
+            child
+            child type='label-item'
+            style
+              class name='irc-entry-frame'
+          packing
+            property name='expand' false
+            property name='fill' true
+            property name='position' 1
+    child type='titlebar'
+      object class='GtkHeaderBar' id='headerbar'
+        property name='visible' true
+        property name='can-focus' false
+        property name='show-close-button' true
+        child
+        child
+          object class='GtkBox'
+            property name='visible' true
+            property name='can-focus' false
+            property name='spacing' 5
+            child
+              object class='GtkToggleButton'
+                property name='visible' true
+                property name='can-focus' true
+                property name='receives-default' true
+                property name='action-name' win.search
+                child
+                  object class='GtkImage'
+                    property name='visible' true
+                    property name='can-focus' false
+                    property name='icon-name' edit-find-symbolic
+              packing
+                property name='expand' false
+                property name='fill' true
+                property name='position' 0
+            child
+              object class='GtkMenuButton' id='usersbutton'
+                property name='visible' true
+                property name='can-focus' true
+                property name='receives-default' true
+                property name='focus-on-click' false
+                child
+                  object class='GtkImage' id='avatar_image'
+                    property name='visible' true
+                    property name='can-focus' false
+                    property name='icon-name' avatar-default-symbolic
+              packing
+                property name='expand' false
+                property name='fill' true
+                property name='position' 1
+          packing
+            property name='pack-type' end
+            property name='position' 1

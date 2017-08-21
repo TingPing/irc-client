@@ -16,10 +16,24 @@ client_sources = [
   'main.c',
 ]
 
+slim = find_program('slimrb')
+window_ui = custom_target('irc-window-ui',
+  input: 'irc-window.slim',
+  output: 'irc-window.ui',
+  command: [slim, '@INPUT@'],
+  capture: true,
+)
+
+gtk_builder_tool = find_program('gtk-builder-tool')
+test('Validate irc-window.ui', gtk_builder_tool,
+  args: ['validate', window_ui]
+)
+
 client_resources = gnome.compile_resources('irc-resources',
   'irc-resources.gresource.xml',
   source_dir: '../data',
   c_name: 'irc',
+  dependencies: window_ui
 )
 
 client_deps = [
