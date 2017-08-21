@@ -17,7 +17,7 @@ client_sources = [
 ]
 
 client_resources = gnome.compile_resources('irc-resources',
-  '../data/se.tingping.IrcClient.gresource.xml',
+  'irc-resources.gresource.xml',
   source_dir: '../data',
   c_name: 'irc',
 )

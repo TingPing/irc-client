@@ -333,7 +333,7 @@ irc_window_class_init (IrcWindowClass *klass)
 	wid_class->configure_event = irc_window_configure_event;
 	wid_class->size_allocate = irc_window_size_allocate;
 
-	gtk_widget_class_set_template_from_resource (wid_class, "/se/tingping/IrcClient/ui/window.ui");
+	gtk_widget_class_set_template_from_resource (wid_class, "/se/tingping/IrcClient/irc-window.ui");
 	gtk_widget_class_bind_template_child_private (wid_class, IrcWindow, viewstack);
 	gtk_widget_class_bind_template_child_private (wid_class, IrcWindow, usersbutton);
   	gtk_widget_class_bind_template_child_private (wid_class, IrcWindow, headerbar);

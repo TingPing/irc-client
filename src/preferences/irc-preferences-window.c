@@ -198,7 +198,7 @@ irc_preferences_window_class_init (IrcPreferencesWindowClass *klass)
 
 	widget_class->destroy = irc_preferences_window_destroy;
 
-	gtk_widget_class_set_template_from_resource (widget_class, "/se/tingping/IrcClient/ui/preferences.ui");
+	gtk_widget_class_set_template_from_resource (widget_class, "/se/tingping/IrcClient/preferences/irc-preferences-window.ui");
 
 	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, joinpart_switch);
   	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, stripcolor_switch);

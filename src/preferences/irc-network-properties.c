@@ -93,7 +93,7 @@ irc_network_properties_class_init (IrcNetworkPropertiesClass *klass)
 	object_class->finalize = irc_network_properties_finalize;
 	dlg_class->response = irc_network_properties_response;
 
-  	gtk_widget_class_set_template_from_resource (wid_class, "/se/tingping/IrcClient/ui/networkproperties.ui");
+	gtk_widget_class_set_template_from_resource (wid_class, "/se/tingping/IrcClient/preferences/irc-network-properties.ui");
   	gtk_widget_class_bind_template_child_private (wid_class, IrcNetworkProperties, hostnameentry);
 	gtk_widget_class_bind_template_child_private (wid_class, IrcNetworkProperties, nicknameentry);
 	gtk_widget_class_bind_template_child_private (wid_class, IrcNetworkProperties, usernameentry);
