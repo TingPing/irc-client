@@ -101,7 +101,7 @@ irc_entry_activate (GSimpleAction *action, GVariant *param, gpointer data)
 
 	while (TRUE)
 	{
-		g_autofree char *text = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
+		g_autofree char *text = gtk_text_buffer_get_text (buf, &start, &end, TRUE);
 		if (text != NULL && *text)
 		{
 			if (IRC_IS_CONTEXT(ctx))
