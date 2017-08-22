@@ -82,7 +82,6 @@ irc_application_load_plugins (IrcApplication *self)
 {
 	IrcApplicationPrivate *priv = irc_application_get_instance_private (IRC_APPLICATION(self));
 	PeasEngine *engine = peas_engine_get_default();
-	peas_engine_enable_loader (engine, "python3");
 	g_autofree char *custom_path = get_custom_plugin_dir ();
 	if (custom_path)
 	{

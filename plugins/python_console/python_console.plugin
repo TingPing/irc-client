@@ -1,7 +1,0 @@
-[Plugin]
-Module=PythonConsole
-Loader=python3
-Name=Python Console
-Description=Adds an interactive python console
-Authors=TingPing
-Copyright=© 2015 TingPing
