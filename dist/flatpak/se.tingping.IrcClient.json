@@ -92,6 +92,43 @@
             "url": "https://download.gnome.org/sources/gupnp-igd/0.2/gupnp-igd-0.2.4.tar.xz",
             "sha256": "38c4a6d7718d17eac17df95a3a8c337677eda77e58978129ad3182d769c38e44"
           }]
+        },
+        {
+          "name": "luajit",
+          "no-autogen": true,
+          "cleanup": [ "/bin", "/lib/*.a", "/include" ],
+          "sources": [
+            {
+              "type": "archive",
+              "url": "http://luajit.org/download/LuaJIT-2.0.5.tar.gz",
+              "sha256": "874b1f8297c697821f561f9b73b57ffd419ed8f4278c82e05b48806d30c1e979"
+            },
+            {
+              "type": "shell",
+              "commands": [ "sed -i 's|/usr/local|/app|' ./Makefile" ]
+            }
+          ]
+        },
+        {
+          "name": "lgi",
+          "no-autogen": true,
+          "build-options": {
+            "cflags": "-O2",
+            "env": {
+              "LUA_CFLAGS": "-I/app/include/luajit-2.0"
+            }
+          },
+          "sources": [
+            {
+              "type": "git",
+              "url": "https://github.com/pavouk/lgi.git",
+              "commit": "93eab44ce1e9dcad388546b765c020dec880df3f"
+            },
+            {
+              "type": "shell",
+              "commands": [ "sed -i 's|/usr/local|/app|' ./lgi/Makefile" ]
+            }
+          ]
         }
       ]
     }

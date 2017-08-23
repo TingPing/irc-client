@@ -1,5 +1,4 @@
 client_sources = [
-  'irc-application.c',
   'irc-chatview.c',
   'irc-colorscheme.c',
   'irc-entry.c',
@@ -16,6 +15,21 @@ client_sources = [
   'main.c',
 ]
 
+client_public_headers = [
+  'irc-chatview.h',
+  'irc-colorscheme.h',
+  'irc-entry.h',
+  'irc-entrybuffer.h',
+  'irc-textview.h',
+  'irc-window.h',
+  'irc-userlist.h',
+  'contextview/irc-chanstore.h',
+  'contextview/irc-contextview.h',
+  'contextview/irc-cellrenderer-bubble.h',
+  'preferences/irc-preferences-window.h',
+  'preferences/irc-network-properties.h',
+]
+
 client_resources = gnome.compile_resources('irc-resources',
   'irc-resources.gresource.xml',
   source_dir: '../data',
@@ -28,15 +42,27 @@ client_deps = [
   libpeas_dep,
   libgspell_dep,
   libgtksource_dep,
+  dependency('luajit'),
 ]
 
 client_cflags = [
   '-include', 'irc-config.h'
 ]
 
-executable('irc-client', client_resources + client_sources,
+irc_client = executable('irc-client', client_resources + client_sources,
   dependencies: client_deps,
   c_args: client_cflags,
   include_directories: include_directories(['preferences', 'contextview']),
   install: true,
 )
+
+gnome.generate_gir(irc_client,
+  sources: client_public_headers,
+  includes: ['Gtk-3.0', libirc_gir[0]],
+  namespace: 'IrcClient',
+  identifier_prefix: 'Irc',
+  symbol_prefix: 'irc',
+  nsversion: '0.1',
+  install: true,
+)
+

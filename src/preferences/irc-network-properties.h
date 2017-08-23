@@ -25,6 +25,6 @@ G_BEGIN_DECLS
 #define IRC_TYPE_NETWORK_PROPERTIES (irc_network_properties_get_type())
 G_DECLARE_FINAL_TYPE (IrcNetworkProperties, irc_network_properties, IRC, NETWORK_PROPERTIES, GtkDialog)
 
-GtkDialog *irc_network_properties_new (const char *);
+GtkDialog *irc_network_properties_new (const char *network);
 
 G_END_DECLS

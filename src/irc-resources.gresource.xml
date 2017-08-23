@@ -7,5 +7,9 @@
     <file compressed="true" preprocess="xml-stripblanks">irc-window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences/irc-preferences-window.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">preferences/irc-network-properties.ui</file>
+
+    <file>application.lua</file>
+    <file>main.lua</file>
+    <file>window.lua</file>
   </gresource>
 </gresources>

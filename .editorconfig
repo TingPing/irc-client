@@ -12,6 +12,6 @@ trim_trailing_whitespace = true
 indent_size = 2
 indent_style = space
 
-[*.{json,xml,ui}]
+[*.{json,xml,ui,lua}]
 indent_size = 2
 indent_style = space
