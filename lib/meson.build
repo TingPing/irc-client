@@ -70,6 +70,7 @@ libirc_marshal = gnome.genmarshal('irc-marshal',
   sources: 'irc-marshal.list',
   prefix: 'irc_marshal',
   #install_header: true,
+  internal: true,
   install_dir: pkgincludedir,
 )
 

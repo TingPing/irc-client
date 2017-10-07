@@ -64,7 +64,7 @@ endif
 i18n = import('i18n')
 gnome = import('gnome')
 
-libgio_dep = dependency('gio-2.0', version: '>= 2.52')
+libgio_dep = dependency('gio-2.0', version: '>= 2.54')
 libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
 libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
 libnotify_dep = dependency('libnotify')
