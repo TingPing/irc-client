@@ -20,26 +20,16 @@
 #include <glib/gstdio.h>
 #include "irc-colorscheme.h"
 
-#if 0
-static const char* mirc_colors[16] = {
-	"#D3D7CF", // white
-	"#2E3436", // black
-	"#3465A4", // blue
-	"#4E9A06", // green
-	"#CC0000", // red
-	"#8F3902", // brown
-	"#5C3566", // purple
-	"#CE5C00", // orange
-	"#C4A000", // yellow
-	"#73D216", // lightgreen
-	"#11A879", // cyan
-	"#58A19D", // lightcyan
-	"#57799E", // lightblue
-	"#A04365", // pink
-	"#555753", // grey
-	"#888A85", // lightgrey
+// http://anti.teamidiot.de/static/nei/*/extended_mirc_color_proposal.html
+static const char* extended_mirc_colors[83] = {
+    "#470000", "#472100", "#474700", "#324700", "#004700", "#00472c", "#004747", "#002747", "#000047", "#2e0047", "#470047", "#47002a",
+    "#740000", "#743a00", "#747400", "#517400", "#007400", "#007449", "#007474", "#004074", "#000074", "#4b0074", "#740074", "#740045",
+    "#b50000", "#b56300", "#b5b500", "#7db500", "#00b500", "#00b571", "#00b5b5", "#0063b5", "#0000b5", "#7500b5", "#b500b5", "#b5006b",
+    "#ff0000", "#ff8c00", "#ffff00", "#b2ff00", "#00ff00", "#00ffa0", "#00ffff", "#008cff", "#0000ff", "#a500ff", "#ff00ff", "#ff0098",
+    "#ff5959", "#ffb459", "#ffff71", "#cfff60", "#6fff6f", "#65ffc9", "#6dffff", "#59b4ff", "#5959ff", "#c459ff", "#ff66ff", "#ff59bc",
+    "#ff9c9c", "#ffd39c", "#ffff9c", "#e2ff9c", "#9cff9c", "#9cffdb", "#9cffff", "#9cd3ff", "#9c9cff", "#dc9cff", "#ff9cff", "#ff94d3",
+    "#000000", "#131313", "#282828", "#363636", "#4d4d4d", "#656565", "#818181", "#9f9f9f", "#bcbcbc", "#e2e2e2", "#ffffff",
 };
-#endif
 
 static GtkTextTagTable *
 irc_colorscheme_new (void)
@@ -63,6 +53,22 @@ irc_colorscheme_new (void)
 		g_settings_bind (color_settings, tag_name + 2, tag, "background", G_SETTINGS_BIND_GET);
 		gtk_text_tag_table_add (table, tag);
 	}
+
+    for (gushort i = 0; i < G_N_ELEMENTS(extended_mirc_colors); ++i)
+    {
+		char tag_name[10];
+		GtkTextTag *tag;
+
+		g_sprintf (tag_name, "fgcolor%02u", i + 16);
+		tag = gtk_text_tag_new (tag_name);
+		g_object_set (G_OBJECT(tag), "foreground", extended_mirc_colors[i], NULL);
+		gtk_text_tag_table_add (table, tag);
+
+		g_sprintf (tag_name, "bgcolor%02u", i + 16);
+		tag = gtk_text_tag_new (tag_name);
+		g_object_set (G_OBJECT(tag), "background", extended_mirc_colors[i], NULL);
+		gtk_text_tag_table_add (table, tag);
+    }
 
 	GtkTextTag *tag;
 	tag = gtk_text_tag_new ("bold");

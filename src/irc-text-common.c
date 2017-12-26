@@ -21,7 +21,7 @@ apply_color_tag (GtkTextBuffer *buf, const GtkTextIter *fgstart, const GtkTextIt
 	if (*fgcolor && flags & FG)
 	{
 		col_num = g_ascii_strtoull (fgcolor, NULL, 0);
-		if (col_num <= 15)
+		if (col_num <= 98)
 		{
 			g_sprintf (colorstr, "fgcolor%02u", (guint)col_num); // Always fits.
 			gtk_text_buffer_apply_tag_by_name (buf, colorstr, fgstart, end);
@@ -31,7 +31,7 @@ apply_color_tag (GtkTextBuffer *buf, const GtkTextIter *fgstart, const GtkTextIt
 	if (*bgcolor && flags & BG)
 	{
 	  	col_num = g_ascii_strtoull (bgcolor, NULL, 0);
-		if (col_num <= 15)
+		if (col_num <= 98)
 		{
 			g_sprintf (colorstr, "bgcolor%02u", (guint)col_num); // Always fits.
 			gtk_text_buffer_apply_tag_by_name (buf, colorstr, bgstart, end);
