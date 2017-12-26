@@ -1,7 +1,7 @@
 {
   "app-id": "se.tingping.IrcClient",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "3.24",
+  "runtime-version": "3.26",
   "sdk": "org.gnome.Sdk",
   "command": "irc-client",
   "finish-args": [
@@ -27,9 +27,6 @@
     {
       "name": "irc-client",
       "buildsystem": "meson",
-      "builddir": true,
-
-      "config-opts": [ "--libdir=lib" ],
       "sources": [{
         "type": "git",
         "url": "https://github.com/TingPing/irc-client.git"
