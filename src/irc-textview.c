@@ -55,39 +55,6 @@ apply_misc_tags (GtkTextBuffer *buf, const char *text, int offset)
 	}
 }
 
-static char *
-make_timestamp (time_t stamp, int *stamp_len_out)
-{
-	static char *format;
-  	char dest[64];
-	gsize len;
-	struct tm tm;
-
-	if (stamp == 0)
-		stamp = time (NULL);
-
-	localtime_r (&stamp, &tm);
-
-	if (G_UNLIKELY(format == NULL))
-	{
-		// TODO: Config
-		// strftime() expects locale
-		format = g_locale_from_utf8 ("%H:%M:%S| ", -1, NULL, NULL, NULL);
-	}
-
-	len = strftime (dest, sizeof(dest), format, &tm);
-	if (len == 0)
-	{
-		g_warning ("Failed to format timestamp");
-		return NULL;
-	}
-
-	g_assert (len <= G_MAXSSIZE);
-	char *utf8_stamp = g_locale_to_utf8 (dest, (gssize)len, NULL, NULL, NULL);
-  	*stamp_len_out = (int)g_utf8_strlen (dest, -1); // Chars needed for textiter offsets
-	return utf8_stamp;
-}
-
 /**
  * irc_textview_append_text:
  * @text: Line of text to append
@@ -117,8 +84,12 @@ irc_textview_append_text (IrcTextview *self, const char *text, time_t stamp)
   		gtk_text_buffer_insert (buf, &iter, "\n", 1);
 	}
 
-	int stamp_len = 0;
-	g_autofree char *stampstr = make_timestamp (stamp, &stamp_len);
+	if (stamp == 0)
+		stamp = time (NULL);
+
+	g_autoptr(GDateTime) timestamp = g_date_time_new_from_unix_utc (stamp);
+	g_autofree char *stampstr = g_date_time_format (timestamp, "%T ");
+	int stamp_len = (int)strlen (stampstr);
 	if (stampstr != NULL)
 		gtk_text_buffer_insert_with_tags_by_name (buf, &iter, stampstr, stamp_len, "time", NULL);
 	gtk_text_buffer_insert (buf, &iter, text, -1);
