@@ -3,3 +3,6 @@ option('with-vapi', type: 'boolean', value: false)
 option('with-identd', type: 'boolean', value: true,
   description: 'Plugin exposing identd server'
 )
+option('lib-only', type: 'boolean', value: false,
+  description: 'Only build libirc ommitting the frontend'
+)
