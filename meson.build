@@ -1,7 +1,7 @@
 project('irc-client', 'c',
   version: '0.0.1',
   license: 'GPL3+',
-  meson_version: '>= 0.37.0',
+  meson_version: '>= 0.46.0',
   default_options: [
     'c_std=gnu99',
     'warning_level=2',
@@ -54,7 +54,7 @@ if get_option('buildtype') != 'plain'
   ]
   global_ldflags = []
   foreach ldflag: test_ldflags
-    if cc.has_argument(ldflag) and cc.links('int main (void) { return 0; }', args: ldflag)
+    if cc.has_link_argument(ldflag)
       global_ldflags += ldflag
     endif
   endforeach
@@ -64,7 +64,7 @@ endif
 i18n = import('i18n')
 gnome = import('gnome')
 
-libgio_dep = dependency('gio-2.0', version: '>= 2.54')
+libgio_dep = dependency('gio-2.0', version: '>= 2.56')
 libnotify_dep = dependency('libnotify')
 if not get_option('lib-only')
   libgtk_dep = dependency('gtk+-3.0', version: '>= 3.22')
