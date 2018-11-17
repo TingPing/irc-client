@@ -30,6 +30,10 @@
 		  <summary>Main font</summary>
 		  <default>"Monospace"</default>
 		</key>
+		<key name="auto-away" type="b">
+		  <summary>Automatically mark away</summary>
+		  <default>true</default>
+		</key>
 	</schema>
 
 	<!-- relocatable schema -->

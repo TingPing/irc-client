@@ -30,7 +30,7 @@ struct _IrcPreferencesWindow
 
 typedef struct
 {
-	GtkSwitch *joinpart_switch, *stripcolor_switch;
+	GtkSwitch *joinpart_switch, *stripcolor_switch, *autoaway_switch;
 	GtkTreeSelection *network_selection;
 	GtkListStore *networklist;
 	GtkFontButton *fontbutton;
@@ -202,6 +202,7 @@ irc_preferences_window_class_init (IrcPreferencesWindowClass *klass)
 
 	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, joinpart_switch);
   	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, stripcolor_switch);
+	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, autoaway_switch);
 	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, networklist);
 	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, network_selection);
 	gtk_widget_class_bind_template_child_private (widget_class, IrcPreferencesWindow, pluginmanager);
@@ -238,6 +239,9 @@ irc_preferences_window_init (IrcPreferencesWindow *self)
 	g_autoptr(GSettings) settings = g_settings_new_with_path ("se.tingping.context", "/se/tingping/IrcClient/");
 	g_settings_bind (settings, "hide-joinpart", priv->joinpart_switch, "active", G_SETTINGS_BIND_DEFAULT);
 	g_settings_bind (settings, "stripcolor", priv->stripcolor_switch, "active", G_SETTINGS_BIND_DEFAULT);
+
+	g_autoptr(GSettings) client_settings = g_settings_new ("se.tingping.IrcClient");
+	g_settings_bind (client_settings, "auto-away", priv->autoaway_switch, "active", G_SETTINGS_BIND_DEFAULT);
 
 	g_autoptr(GSettings) color_settings = g_settings_new_with_path ("se.tingping.theme", "/se/tingping/IrcClient/");
 	g_settings_bind_with_mapping (color_settings, "color00", priv->colorbutton00, "rgba", G_SETTINGS_BIND_DEFAULT,

@@ -20,6 +20,8 @@
 #include <libpeas/peas.h>
 
 #include "irc-application.h"
+#include "irc-context.h"
+#include "irc-context-manager.h"
 //#include "irc-plugin-engine.h"
 #include "irc-window.h"
 #include "irc-resources.h"
@@ -51,8 +53,11 @@ G_DEFINE_TYPE_WITH_PRIVATE (IrcApplication, irc_application, GTK_TYPE_APPLICATIO
 IrcApplication *
 irc_application_new (const char *id)
 {
-	return g_object_new (IRC_TYPE_APPLICATION, "application-id", id,
-						"flags", G_APPLICATION_HANDLES_OPEN, NULL);
+	return g_object_new (IRC_TYPE_APPLICATION,
+						"application-id", id,
+						"flags", G_APPLICATION_HANDLES_OPEN,
+						"register-session", TRUE,
+						NULL);
 }
 
 static void
@@ -171,6 +176,29 @@ font_changed (GObject *obj, GParamSpec *spec, gpointer data)
 }
 
 static void
+screensaver_active_changed (GtkApplication *self, GParamSpec *spec, gpointer data)
+{
+	IrcApplicationPrivate *priv = irc_application_get_instance_private (IRC_APPLICATION(self));
+
+	if (!g_settings_get_boolean (priv->settings, "auto-away"))
+		return;
+
+	IrcContextManager *mgr = irc_context_manager_get_default ();
+	IrcContext *ctx = irc_context_manager_get_front_context (mgr);
+	if (ctx == NULL)
+		return;
+
+	gboolean active;
+	g_object_get (self, "screensaver-active", &active, NULL);
+	g_debug ("Got screensaver-active: %s", active ? "true" : "false");
+
+	if (active)
+		irc_context_run_command (ctx, "allserv AWAY :Auto-away");
+	else
+		irc_context_run_command (ctx, "allserv AWAY");
+}
+
+static void
 irc_application_preferences (GSimpleAction *action, GVariant *param, gpointer data)
 {
   	IrcApplication *self = IRC_APPLICATION(data);
@@ -270,4 +298,6 @@ irc_application_init (IrcApplication *self)
 	priv->css_provider = gtk_css_provider_new ();
 	g_signal_connect (priv->settings, "changed::font", G_CALLBACK(font_changed), self);
 	font_changed (G_OBJECT(priv->settings), NULL, self);
+
+	g_signal_connect (self, "notify::screensaver-active", G_CALLBACK(screensaver_active_changed), NULL);
 }
