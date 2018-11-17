@@ -1,26 +1,21 @@
 {
   "app-id": "se.tingping.IrcClient",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "3.26",
+  "runtime-version": "3.30",
   "sdk": "org.gnome.Sdk",
   "command": "irc-client",
   "finish-args": [
       "--share=ipc",
-      "--socket=x11",
+      "--socket=fallback-x11",
       "--socket=wayland",
       "--share=network",
 
-      "--talk-name=org.gtk.vfs",
-      "--talk-name=org.gtk.vfs.*",
-      "--talk-name=org.gnome.SettingsDaemon",
       "--talk-name=org.freedesktop.Notifications",
 
       "--env=DCONF_USER_CONFIG_DIR=.config/dconf",
       "--filesystem=xdg-run/dconf",
       "--filesystem=~/.config/dconf:ro",
-      "--talk-name=ca.desrt.dconf",
-
-      "--env=SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+      "--talk-name=ca.desrt.dconf"
   ],
   "cleanup": [ "/include", "/lib/pkgconfig", "*.la", "/share/gir-1.0", "/share/vala", "/share/gtk-doc" ],
   "modules": [
@@ -37,8 +32,8 @@
           "cleanup": [ "/share" ],
           "sources": [{
             "type": "archive",
-            "url": "https://download.gnome.org/sources/gtksourceview/3.24/gtksourceview-3.24.3.tar.xz",
-            "sha256": "3eed05486a6420c3e2fdda0bbb19a0d905ed09ebf442302a026ab7e574204cbd"
+            "url": "https://download.gnome.org/sources/gtksourceview/3.24/gtksourceview-3.24.9.tar.xz",
+            "sha256": "699d76a453e6a3d3331906346e3dbfa25f2cbc9ec090e46635e9c6bb595e07c2"
           }]
         },
         {
@@ -47,18 +42,19 @@
           "cleanup": [ "/bin", "/lib/peas-demo" ],
           "sources": [{
             "type": "archive",
-            "url": "https://download.gnome.org/sources/libpeas/1.20/libpeas-1.20.0.tar.xz",
-            "sha256": "f392fffe2dc00072a51bb2a1b274224a06bdc5f9c3b3c0ac4816909e9933d354"
+            "url": "https://download.gnome.org/sources/libpeas/1.22/libpeas-1.22.0.tar.xz",
+            "sha256": "5b2fc0f53962b25bca131a5ec0139e6fef8e254481b6e777975f7a1d2702a962"
           }]
         },
         {
           "name": "gspell",
           "config-opts": [ "--disable-vala", "--disable-introspection",
                            "--disable-gtk-doc", "--disable-gtk-doc-html" ],
+          "cleanup": ["/bin"],
           "sources": [{
             "type": "archive",
-            "url": "https://download.gnome.org/sources/gspell/1.4/gspell-1.4.1.tar.xz",
-            "sha256": "442f88fecd7f9e00a6a9d0af2d762744dd3c119217ff11d6739500f75b0f10be"
+            "url": "https://download.gnome.org/sources/gspell/1.8/gspell-1.8.1.tar.xz",
+            "sha256": "819a1d23c7603000e73f5e738bdd284342e0cd345fb0c7650999c31ec741bbe5"
           }]
         },
         {
