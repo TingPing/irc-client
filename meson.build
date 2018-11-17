@@ -13,13 +13,14 @@ libirc_api_version = '0.1'
 
 cc = meson.get_compiler('c')
 
-test_cflags = [
+global_cflags = cc.get_supported_arguments ([
   '-funsigned-char',
   '-Wconversion',
   '-Winline',
   '-Wno-padded',
   '-Wno-unused-parameter',
   '-Wno-nonnull-compare',
+  '-Wno-cast-function-type', # Silences warning in G_DEFINE_DYNAMIC_TYPE_EXTENDED()
   '-Wstrict-prototypes',
   '-Wmissing-prototypes',
   '-Werror=implicit-function-declaration',
@@ -27,13 +28,8 @@ test_cflags = [
   '-Werror=init-self',
   ['-Werror=format-security','-Werror=format=1'],
   '-Werror=date-time',
-]
-global_cflags = []
-foreach cflag : test_cflags
-  if cc.has_multi_arguments(cflag)
-    global_cflags += cflag
-  endif
-endforeach
+  '-Wmaybe-uninitialized',
+])
 if get_option('buildtype') != 'plain'
   if cc.has_argument('-fstack-protector-strong') and cc.links('''
      int main (void) {
@@ -48,16 +44,10 @@ endif
 add_project_arguments(global_cflags, language: 'c')
 
 if get_option('buildtype') != 'plain'
-  test_ldflags = [
+  global_ldflags = cc.get_supported_link_arguments ([
     '-Wl,-z,relro',
     '-Wl,-z,now',
-  ]
-  global_ldflags = []
-  foreach ldflag: test_ldflags
-    if cc.has_link_argument(ldflag)
-      global_ldflags += ldflag
-    endif
-  endforeach
+  ])
   add_project_link_arguments(global_ldflags, language: 'c')
 endif
 
