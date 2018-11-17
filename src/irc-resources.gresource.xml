@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/se/tingping/IrcClient">
-    <file compressed="true" preprocess="xml-stripblanks">gtk/menus.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+    <file preprocess="xml-stripblanks">gtk/menus.ui</file>
+    <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
-    <file compressed="true" preprocess="xml-stripblanks">irc-window.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">preferences/irc-preferences-window.ui</file>
-    <file compressed="true" preprocess="xml-stripblanks">preferences/irc-network-properties.ui</file>
+    <file preprocess="xml-stripblanks">irc-window.ui</file>
+    <file preprocess="xml-stripblanks">preferences/irc-preferences-window.ui</file>
+    <file preprocess="xml-stripblanks">preferences/irc-network-properties.ui</file>
   </gresource>
 </gresources>
