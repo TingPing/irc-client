@@ -60,7 +60,7 @@ if not get_option('lib-only')
   libgtk_dep = dependency('gtk+-3.0', version: '>= 3.24')
   libpeas_dep = dependency('libpeas-gtk-1.0', version: '>= 1.14.0')
   libgspell_dep = dependency('gspell-1', version: '>= 1.3.0')
-  libgtksource_dep = dependency('gtksourceview-3.0')
+  libgtksource_dep = dependency('gtksourceview-4')
 endif
 
 subdir('lib')
